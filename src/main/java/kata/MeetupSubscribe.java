@@ -1,6 +1,5 @@
 package kata;
 
-import kata.persistence.MeetupEventDao;
 import kata.persistence.MeetupEventRepository;
 
 import java.time.Instant;
@@ -11,18 +10,16 @@ import static java.util.stream.Collectors.toList;
 
 public class MeetupSubscribe {
 
-    private final MeetupEventDao meetupEventDao;
     private final MeetupEventRepository repository;
 
-    public MeetupSubscribe(MeetupEventDao meetupEventDao, MeetupEventRepository repository) {
-        this.meetupEventDao = meetupEventDao;
+    public MeetupSubscribe(MeetupEventRepository repository) {
         this.repository = repository;
     }
 
     public Long registerMeetupEvent(String eventName, Integer eventCapacity, LocalDateTime startTime) {
-        long id = meetupEventDao.generateId();
+        long id = repository.generateId();
         MeetupEvent meetupEvent = new MeetupEvent(id, eventCapacity, eventName, startTime, null);
-        meetupEventDao.create(meetupEvent);
+        repository.save(meetupEvent);
         return id;
     }
 
@@ -35,7 +32,7 @@ public class MeetupSubscribe {
 
         var meetup2 = repository.findById(meetupEventId);
         List<Subscription> participants = meetup2.getParticipants();
-        MeetupEvent meetupEvent = meetupEventDao.findById(meetupEventId);
+        MeetupEvent meetupEvent = repository.findById(meetupEventId);
         boolean addToWaitingList = participants.size() == meetupEvent.getCapacity();
         Subscription subscription = new Subscription(userId, Instant.now(), addToWaitingList);
         var meetup3 = repository.findById(meetupEventId);
@@ -63,11 +60,13 @@ public class MeetupSubscribe {
     }
 
     public void increaseCapacity(Long meetupEventId, int newCapacity) {
-        MeetupEvent meetupEvent = meetupEventDao.findById(meetupEventId);
+        MeetupEvent meetupEvent = repository.findById(meetupEventId);
         int oldCapacity = meetupEvent.getCapacity();
 
         if (oldCapacity < newCapacity) {
-            meetupEventDao.updateCapacity(meetupEventId, newCapacity);
+            var meetupEvent1 = repository.findById(meetupEventId);
+            var updatedMeetupEvent = meetupEvent1.withCapacity(newCapacity);
+            repository.save(updatedMeetupEvent);
             int newSlots = newCapacity - oldCapacity;
             var meetup = repository.findById(meetupEventId);
             List<Subscription> waitingList = meetup.getWaitingList();
@@ -82,7 +81,7 @@ public class MeetupSubscribe {
     }
 
     public MeetupEventStatusDto getMeetupEventStatus(Long meetupEventId) {
-        MeetupEvent meetupEvent = meetupEventDao.findById(meetupEventId);
+        MeetupEvent meetupEvent = repository.findById(meetupEventId);
         var meetup1 = repository.findById(meetupEventId);
         List<Subscription> participants = meetup1.getParticipants();
         var meetup = repository.findById(meetupEventId);

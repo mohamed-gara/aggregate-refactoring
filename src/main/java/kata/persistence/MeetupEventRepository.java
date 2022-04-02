@@ -22,6 +22,14 @@ public class MeetupEventRepository {
         this.jdbi = jdbi;
     }
 
+    public long generateId() {
+        return jdbi.withHandle(handle -> handle
+                .createQuery("SELECT NEXTVAL('MEETUP_EVENT_ID_SEQ')")
+                .mapTo(Long.class)
+                .one()
+        );
+    }
+
     public MeetupEvent findById(Long meetupEventId) {
         var subscriptions = findSubscriptionsOf(meetupEventId);
         String sql = "SELECT * FROM MEETUP_EVENT WHERE id = :id";
