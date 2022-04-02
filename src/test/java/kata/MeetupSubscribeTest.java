@@ -2,6 +2,7 @@ package kata;
 
 import kata.dbtestutil.MemoryDbTestContext;
 import kata.persistence.MeetupEventDao;
+import kata.persistence.MeetupEventRepository;
 import kata.persistence.MeetupSubscriptionDao;
 import org.assertj.core.api.Assertions;
 import org.jdbi.v3.core.Jdbi;
@@ -23,8 +24,9 @@ public class MeetupSubscribeTest {
     void setUp() throws Exception {
         memoryDbTestContext = MemoryDbTestContext.openWithSql("/setup.sql");
         Jdbi jdbi = memoryDbTestContext.getJdbi();
+        var repository = new MeetupEventRepository(jdbi);
         MeetupSubscriptionDao meetupSubscriptionDao = new MeetupSubscriptionDao(jdbi);
-        MeetupEventDao meetupEventDao = new MeetupEventDao(jdbi);
+        MeetupEventDao meetupEventDao = new MeetupEventDao(jdbi, repository);
         meetupSubscribe = new MeetupSubscribe(meetupSubscriptionDao, meetupEventDao);
     }
 

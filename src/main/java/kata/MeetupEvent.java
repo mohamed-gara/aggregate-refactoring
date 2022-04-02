@@ -38,4 +38,8 @@ public class MeetupEvent {
     public List<Subscription> getSubscriptions() {
         return subscriptions;
     }
+
+    public MeetupEvent withCapacity(int capacity) {
+        return new MeetupEvent(id, capacity, eventName, startTime, subscriptions);
+    }
 }

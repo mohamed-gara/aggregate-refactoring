@@ -65,7 +65,7 @@ public class MeetupEventRepository {
     public void save(MeetupEvent meetupEvent) {
         jdbi.useTransaction(handle -> {
             upsertMeetupEvent(meetupEvent).useHandle(handle);
-            upsertSubscriptions(meetupEvent.getId(), meetupEvent.getSubscriptions()).useHandle(handle);
+            if (meetupEvent.getSubscriptions() != null) upsertSubscriptions(meetupEvent.getId(), meetupEvent.getSubscriptions()).useHandle(handle);
         });
     }
 
