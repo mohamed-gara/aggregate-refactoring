@@ -25,7 +25,7 @@ public class MeetupSubscribeTest {
         memoryDbTestContext = MemoryDbTestContext.openWithSql("/setup.sql");
         Jdbi jdbi = memoryDbTestContext.getJdbi();
         var repository = new MeetupEventRepository(jdbi);
-        MeetupSubscriptionDao meetupSubscriptionDao = new MeetupSubscriptionDao(jdbi);
+        MeetupSubscriptionDao meetupSubscriptionDao = new MeetupSubscriptionDao(repository);
         MeetupEventDao meetupEventDao = new MeetupEventDao(jdbi, repository);
         meetupSubscribe = new MeetupSubscribe(meetupSubscriptionDao, meetupEventDao);
     }

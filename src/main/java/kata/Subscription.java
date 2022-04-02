@@ -27,4 +27,8 @@ public class Subscription {
     public boolean isInWaitingList() {
         return isInWaitingList;
     }
+
+    public boolean confirm() {
+        return isInWaitingList = false;
+    }
 }

@@ -66,6 +66,7 @@ public class MeetupEventRepository {
         jdbi.useTransaction(handle -> {
             upsertMeetupEvent(meetupEvent).useHandle(handle);
             if (meetupEvent.getSubscriptions() != null) upsertSubscriptions(meetupEvent.getId(), meetupEvent.getSubscriptions()).useHandle(handle);
+            deleteMeetupSubscriptionsNotInUserIds(meetupEvent.getId(), meetupEvent.getUsers()).useHandle(handle);
         });
     }
 
@@ -84,6 +85,8 @@ public class MeetupEventRepository {
     }
 
     private HandleConsumer<RuntimeException> upsertSubscriptions(long meetupEventId, Collection<Subscription> subscriptions) {
+        if (subscriptions.isEmpty()) return handle -> {};
+
         String sql = "" +
                 "MERGE INTO USER_SUBSCRIPTION (user_id, meetup_event_id, registration_time, waiting_list) " +
                 "KEY (meetup_event_id, user_id) " +
@@ -102,6 +105,17 @@ public class MeetupEventRepository {
     }
 
     private HandleConsumer<RuntimeException> deleteMeetupSubscriptionsNotInUserIds(long meetupEventId, List<String> userIds) {
+
+        if (userIds.isEmpty()) {
+            String sql = "" +
+                    "DELETE FROM USER_SUBSCRIPTION " +
+                    "WHERE meetup_event_id = :meetupEventId ";
+
+            return handle -> handle.createUpdate(sql)
+                    .bind("meetupEventId", meetupEventId)
+                    .execute();
+        }
+
         String sql = "" +
                 "DELETE FROM USER_SUBSCRIPTION " +
                 "WHERE meetup_event_id = :meetupEventId " +
