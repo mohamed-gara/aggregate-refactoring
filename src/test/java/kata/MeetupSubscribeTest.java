@@ -46,11 +46,6 @@ public class MeetupSubscribeTest {
         assertThat(meetupEventStatus.waitingList).isEmpty();
     }
 
-    private Long registerAMeetupWithCapacity(int eventCapacity) {
-        LocalDateTime startTime = LocalDateTime.of(2019, 6, 15, 20, 0);
-        return meetupSubscribe.registerMeetupEvent("Coding dojo session 1", eventCapacity, startTime);
-    }
-
     @Test
     void should_add_subscription_to_participants() {
         Long meetupEventId = registerAMeetupWithCapacity(50);
@@ -134,5 +129,10 @@ public class MeetupSubscribeTest {
         assertThat(meetupEventStatus.eventCapacity).isEqualTo(4);
         assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob", "Charles", "David");
         assertThat(meetupEventStatus.waitingList).containsExactly("Emily");
+    }
+
+    private Long registerAMeetupWithCapacity(int eventCapacity) {
+        LocalDateTime startTime = LocalDateTime.of(2019, 6, 15, 20, 0);
+        return meetupSubscribe.registerMeetupEvent("Coding dojo session 1", eventCapacity, startTime);
     }
 }

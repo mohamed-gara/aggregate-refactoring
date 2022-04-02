@@ -1,7 +1,9 @@
 package kata;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Comparator.comparing;
 
@@ -52,10 +54,6 @@ public class MeetupEvent {
                 .orElse(null);
     }
 
-    public boolean isInWaitingList(String userId) {
-        return getSubscription(userId).isInWaitingList();
-    }
-
     public List<Subscription> getWaitingList() {
         return getSubscriptions().stream()
                 .filter(it -> it.isInWaitingList())
@@ -69,23 +67,57 @@ public class MeetupEvent {
                 .toList();
     }
 
-    public void remove(String userId) {
-        getSubscriptions().stream()
-                .filter(it -> it.getUserId().equals(userId))
-                .findFirst()
-                .ifPresent(it -> subscriptions.remove(it));
-    }
-
     public List<String> getUsers() {
         return getSubscriptions().stream()
                 .map(Subscription::getUserId)
                 .toList();
     }
 
-    public void changeFromWaitingListToParticipant(String userId) {
+    boolean hasSubscriptionFor(String userId) {
+        return getSubscription(userId) != null;
+    }
+
+    void subscribe(String userId) {
+        var subscription = new Subscription(userId, Instant.now(), isFull());
+        getSubscriptions().add(subscription);
+    }
+
+    private boolean isFull() {
+        return getParticipants().size() == getCapacity();
+    }
+
+    void cancelSubscription(String userId) {
+        var inWaitingList = isInWaitingList(userId);
+        remove(userId);
+
+        if (!inWaitingList) {
+            getFirstInWaitingList().ifPresent(it -> it.confirm());
+        }
+    }
+
+    private Optional<Subscription> getFirstInWaitingList() {
+        return getWaitingList().isEmpty() ? Optional.empty() : Optional.of(getWaitingList().get(0));
+    }
+
+    private boolean isInWaitingList(String userId) {
+        return getSubscription(userId).isInWaitingList();
+    }
+
+    private void remove(String userId) {
         getSubscriptions().stream()
                 .filter(it -> it.getUserId().equals(userId))
                 .findFirst()
-                .ifPresent(it -> it.confirm());
+                .ifPresent(it -> subscriptions.remove(it));
+    }
+
+    public MeetupEvent updateCapacityTo(int newCapacity) {
+        var oldCapacity = getCapacity();
+        var updatedMeetupEvent = withCapacity(newCapacity);
+        var newSlots = newCapacity - oldCapacity;
+        getWaitingList()
+                .stream()
+                .limit(newSlots)
+                .forEach(subscription -> subscription.confirm());
+        return updatedMeetupEvent;
     }
 }
