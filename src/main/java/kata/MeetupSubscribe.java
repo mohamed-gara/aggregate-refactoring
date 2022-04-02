@@ -21,7 +21,7 @@ public class MeetupSubscribe {
 
     public Long registerMeetupEvent(String eventName, Integer eventCapacity, LocalDateTime startTime) {
         long id = meetupEventDao.generateId();
-        MeetupEvent meetupEvent = new MeetupEvent(id, eventCapacity, eventName, startTime);
+        MeetupEvent meetupEvent = new MeetupEvent(id, eventCapacity, eventName, startTime, null);
         meetupEventDao.create(meetupEvent);
         return id;
     }

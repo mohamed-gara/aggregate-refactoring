@@ -4,10 +4,15 @@ import kata.MeetupEvent;
 import kata.Subscription;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.PreparedBatch;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+
+import static kata.persistence.JdbiMapperHelper.mapTo;
 
 public class MeetupEventRepository {
 
@@ -18,12 +23,50 @@ public class MeetupEventRepository {
     }
 
     public MeetupEvent findById(Long meetupEventId) {
-        //TODO
-        return null;
+        var subscriptions = findSubscriptionsOf(meetupEventId);
+        String sql = "SELECT * FROM MEETUP_EVENT WHERE id = :id";
+        return jdbi.withHandle(handle -> handle.createQuery(sql)
+                .bind("id", meetupEventId)
+                .map(mapper(subscriptions))
+                .findOne()
+                .orElse(null));
     }
 
+    private RowMapper<MeetupEvent> mapper(List<Subscription> subscriptions) {
+        return (rs, ctx) -> new MeetupEvent(
+                        rs.getLong("id"),
+                        rs.getInt("capacity"),
+                        rs.getString("event_name"),
+                        mapTo(rs, "start_time", LocalDateTime.class, ctx),
+                        subscriptions
+                );
+    }
+
+    private List<Subscription> findSubscriptionsOf(Long meetupEventId) {
+        String sql = "" +
+                "SELECT * FROM USER_SUBSCRIPTION " +
+                "WHERE meetup_event_id = :meetupEventId ";
+
+        return jdbi.withHandle(
+            handle -> handle.createQuery(sql)
+                .bind("meetupEventId", meetupEventId)
+                .map(SUBSCRIPTION_ROW_MAPPER)
+                .list()
+        );
+    }
+
+    private static final RowMapper<Subscription> SUBSCRIPTION_ROW_MAPPER = (rs, ctx) ->
+            new Subscription(
+                    rs.getString("user_id"),
+                    mapTo(rs, "registration_time", Instant.class, ctx),
+                    rs.getBoolean("waiting_list")
+            );
+
     public void save(MeetupEvent meetupEvent) {
-        //TODO
+        jdbi.useTransaction(handle -> {
+            upsertMeetupEvent(meetupEvent).useHandle(handle);
+            upsertSubscriptions(meetupEvent.getId(), meetupEvent.getSubscriptions()).useHandle(handle);
+        });
     }
 
     private HandleConsumer<RuntimeException> upsertMeetupEvent(MeetupEvent meetupEvent) {

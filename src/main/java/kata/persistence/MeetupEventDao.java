@@ -21,7 +21,8 @@ public class MeetupEventDao {
                     rs.getLong("id"),
                     rs.getInt("capacity"),
                     rs.getString("event_name"),
-                    mapTo(rs, "start_time", LocalDateTime.class, ctx)
+                    mapTo(rs, "start_time", LocalDateTime.class, ctx),
+                    null
             );
 
     public void create(MeetupEvent meetupEvent) {

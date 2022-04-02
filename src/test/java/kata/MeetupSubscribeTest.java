@@ -15,8 +15,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MeetupSubscribeTest {
 
-    private MeetupSubscribe meetupSubscribe;
-    private MemoryDbTestContext memoryDbTestContext;
+    MemoryDbTestContext memoryDbTestContext;
+
+    MeetupSubscribe meetupSubscribe;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -136,5 +137,4 @@ public class MeetupSubscribeTest {
         assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob", "Charles", "David");
         assertThat(meetupEventStatus.waitingList).containsExactly("Emily");
     }
-
 }
