@@ -11,5 +11,4 @@ public class MeetupEventStatusDto {
     public LocalDateTime startTime;
     public List<String> participants;
     public List<String> waitingList;
-
 }

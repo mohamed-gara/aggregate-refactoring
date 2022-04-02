@@ -17,83 +17,72 @@ public class MeetupSubscribe {
     }
 
     public Long registerMeetupEvent(String eventName, Integer eventCapacity, LocalDateTime startTime) {
-        long id = repository.generateId();
-        MeetupEvent meetupEvent = new MeetupEvent(id, eventCapacity, eventName, startTime, null);
+        var id = repository.generateId();
+        var meetupEvent = new MeetupEvent(id, eventCapacity, eventName, startTime, List.of());
+
         repository.save(meetupEvent);
+
         return id;
     }
 
     public void subscribeUserToMeetupEvent(String userId, Long meetupEventId) {
-        var meetup1 = repository.findById(meetupEventId);
-        var meetup = meetup1.getSubscription(userId);
-        if (meetup != null) {
+        var meetup = repository.findById(meetupEventId);
+
+        var userSubscription = meetup.getSubscription(userId);
+        if (userSubscription != null) {
             throw new RuntimeException(String.format("User %s already has a subscription", userId));
         }
 
-        var meetup2 = repository.findById(meetupEventId);
-        List<Subscription> participants = meetup2.getParticipants();
-        MeetupEvent meetupEvent = repository.findById(meetupEventId);
-        boolean addToWaitingList = participants.size() == meetupEvent.getCapacity();
-        Subscription subscription = new Subscription(userId, Instant.now(), addToWaitingList);
-        var meetup3 = repository.findById(meetupEventId);
-        meetup3.getSubscriptions().add(subscription);
-        repository.save(meetup3);
+        var addToWaitingList = meetup.getParticipants().size() == meetup.getCapacity();
+        var subscription = new Subscription(userId, Instant.now(), addToWaitingList);
+        meetup.getSubscriptions().add(subscription);
+
+        repository.save(meetup);
     }
 
     public void cancelUserSubscription(String userId, Long meetupEventId) {
         var meetup = repository.findById(meetupEventId);
-        Boolean inWaitingList = meetup.isInWaitingList(userId);
-        var meetup3 = repository.findById(meetupEventId);
-        meetup3.remove(userId);
-        repository.save(meetup3);
+
+        var inWaitingList = meetup.isInWaitingList(userId);
+        meetup.remove(userId);
 
         if (!inWaitingList) {
-            var meetup1 = repository.findById(meetupEventId);
-            List<Subscription> waitingList = meetup1.getWaitingList();
+            List<Subscription> waitingList = meetup.getWaitingList();
             if (!waitingList.isEmpty()) {
                 Subscription firstInWaitingList = waitingList.get(0);
-                var meetup2 = repository.findById(meetupEventId);
-                meetup2.changeFromWaitingListToParticipant(firstInWaitingList.getUserId());
-                repository.save(meetup2);
+                meetup.changeFromWaitingListToParticipant(firstInWaitingList.getUserId());
             }
         }
+
+        repository.save(meetup);
     }
 
     public void increaseCapacity(Long meetupEventId, int newCapacity) {
-        MeetupEvent meetupEvent = repository.findById(meetupEventId);
-        int oldCapacity = meetupEvent.getCapacity();
+        var meetupEvent = repository.findById(meetupEventId);
 
+        var oldCapacity = meetupEvent.getCapacity();
         if (oldCapacity < newCapacity) {
-            var meetupEvent1 = repository.findById(meetupEventId);
-            var updatedMeetupEvent = meetupEvent1.withCapacity(newCapacity);
-            repository.save(updatedMeetupEvent);
-            int newSlots = newCapacity - oldCapacity;
-            var meetup = repository.findById(meetupEventId);
-            List<Subscription> waitingList = meetup.getWaitingList();
-            waitingList.stream()
+            var updatedMeetupEvent = meetupEvent.withCapacity(newCapacity);
+            var newSlots = newCapacity - oldCapacity;
+            meetupEvent.getWaitingList()
+                    .stream()
                     .limit(newSlots)
-                    .forEach(subscription -> {
-                        var meetup1 = repository.findById(meetupEventId);
-                        meetup1.changeFromWaitingListToParticipant(subscription.getUserId());
-                        repository.save(meetup1);
-                    });
+                    .forEach(subscription -> meetupEvent.changeFromWaitingListToParticipant(subscription.getUserId()));
+
+            repository.save(updatedMeetupEvent);
         }
     }
 
     public MeetupEventStatusDto getMeetupEventStatus(Long meetupEventId) {
-        MeetupEvent meetupEvent = repository.findById(meetupEventId);
-        var meetup1 = repository.findById(meetupEventId);
-        List<Subscription> participants = meetup1.getParticipants();
-        var meetup = repository.findById(meetupEventId);
-        List<Subscription> waitingList = meetup.getWaitingList();
+        var meetupEvent = repository.findById(meetupEventId);
 
-        MeetupEventStatusDto meetupEventStatusDto = new MeetupEventStatusDto();
+        var meetupEventStatusDto = new MeetupEventStatusDto();
         meetupEventStatusDto.meetupId = meetupEvent.getId();
         meetupEventStatusDto.eventCapacity = meetupEvent.getCapacity();
         meetupEventStatusDto.startTime = meetupEvent.getStartTime();
         meetupEventStatusDto.eventName = meetupEvent.getEventName();
-        meetupEventStatusDto.waitingList = waitingList.stream().map(Subscription::getUserId).collect(toList());
-        meetupEventStatusDto.participants = participants.stream().map(Subscription::getUserId).collect(toList());
+        meetupEventStatusDto.waitingList = meetupEvent.getWaitingList().stream().map(Subscription::getUserId).collect(toList());
+        meetupEventStatusDto.participants = meetupEvent.getParticipants().stream().map(Subscription::getUserId).collect(toList());
         return meetupEventStatusDto;
     }
 }
