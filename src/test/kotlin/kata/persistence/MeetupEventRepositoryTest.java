@@ -23,7 +23,7 @@ class MeetupEventRepositoryTest {
 
   @BeforeEach
   void setUp() throws Exception {
-    memoryDbTestContext = MemoryDbTestContext.openWithSql("/setup.sql");
+    memoryDbTestContext = MemoryDbTestContext.Companion.openWithSql("/setup.sql");
     Jdbi jdbi = memoryDbTestContext.getJdbi();
     sut = new MeetupEventRepository(jdbi);
   }
