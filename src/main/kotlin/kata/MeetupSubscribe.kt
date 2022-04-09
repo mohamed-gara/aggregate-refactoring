@@ -27,17 +27,17 @@ class MeetupSubscribe(
       throw RuntimeException(String.format("User %s already has a subscription", userId))
     }
 
-    meetup.subscribe(userId)
+    val updatedMeetup = meetup.subscribe(userId)
 
-    repository.save(meetup)
+    repository.save(updatedMeetup)
   }
 
   fun cancelUserSubscription(userId: String, meetupEventId: Long) {
     val meetup = repository.findById(meetupEventId)
 
-    meetup.cancelSubscription(userId)
+    val updatedMeetupEvent = meetup.cancelSubscription(userId)
 
-    repository.save(meetup)
+    repository.save(updatedMeetupEvent)
   }
 
   fun increaseCapacity(meetupEventId: Long, newCapacity: Int) {
