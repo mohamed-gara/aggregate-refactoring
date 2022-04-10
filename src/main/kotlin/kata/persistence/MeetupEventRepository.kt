@@ -2,6 +2,7 @@ package kata.persistence
 
 import kata.MeetupEvent
 import kata.Subscription
+import kata.Subscriptions
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.HandleConsumer
 import org.jdbi.v3.core.Jdbi
@@ -28,13 +29,13 @@ class MeetupEventRepository(private val jdbi: Jdbi) {
     return jdbi.withHandle<MeetupEvent?, RuntimeException> { handle: Handle ->
       handle.createQuery(sql)
         .bind("id", meetupEventId)
-        .map(mapper(subscriptions))
+        .map(mapper(Subscriptions(subscriptions)))
         .findOne()
         .orElse(null)
     }
   }
 
-  private fun mapper(subscriptions: MutableList<Subscription>): RowMapper<MeetupEvent> {
+  private fun mapper(subscriptions: Subscriptions): RowMapper<MeetupEvent> {
     return RowMapper { rs: ResultSet, ctx: StatementContext? ->
       MeetupEvent(
         rs.getLong("id"),
@@ -61,7 +62,7 @@ class MeetupEventRepository(private val jdbi: Jdbi) {
   fun save(meetupEvent: MeetupEvent) {
     jdbi.useTransaction<RuntimeException> { handle: Handle? ->
       upsertMeetupEvent(meetupEvent).useHandle(handle)
-      if (meetupEvent.subscriptions != null) upsertSubscriptions(meetupEvent.id, meetupEvent.subscriptions).useHandle(
+      if (meetupEvent.subscriptions != null) upsertSubscriptions(meetupEvent.id, meetupEvent.subscriptions.list).useHandle(
         handle
       )
       deleteMeetupSubscriptionsNotInUserIds(meetupEvent.id, meetupEvent.users).useHandle(handle)

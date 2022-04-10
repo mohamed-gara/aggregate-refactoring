@@ -3,105 +3,72 @@ package kata
 import java.time.LocalDateTime
 import java.time.Instant
 import java.util.*
-import java.util.Comparator.comparing
 
 data class MeetupEvent(
   val id: Long,
   val capacity: Int,
   val eventName: String,
   val startTime: LocalDateTime,
-  val subscriptions: List<Subscription> = listOf()
+  val subscriptions: Subscriptions = Subscriptions(listOf())
 ) {
 
-  private fun withCapacity(capacity: Int): MeetupEvent {
-    return copy(capacity = capacity)
-  }
-
-  private fun getSubscription(userId: String): Subscription? {
-    return subscriptions.stream()
-      .filter { it.userId == userId }
-      .findAny()
-      .orElse(null)
-  }
-
   val waitingList: List<Subscription>
-    get() = subscriptions.stream()
-      .filter { it.isInWaitingList }
-      .sorted(comparing { it.registrationTime })
-      .toList()
+    get() = subscriptions.waitingList
 
   val participants: List<Subscription>
-    get() = subscriptions.stream()
-      .filter { !it.isInWaitingList }
-      .sorted(comparing { it.registrationTime })
-      .toList()
+    get() = subscriptions.participants
 
   val users: List<String>
-    get() = subscriptions.stream()
-      .map { it.userId }
-      .toList()
+    get() = subscriptions.users
+
+  private val isFull: Boolean
+    get() = participants.size == capacity
 
   fun hasSubscriptionFor(userId: String): Boolean {
-    return getSubscription(userId) != null
+    return subscriptions.findBy(userId) != null
   }
 
   fun subscribe(userId: String): MeetupEvent {
     val subscription = Subscription(userId, Instant.now(), isFull)
-    val newSubscriptions = subscriptions + subscription
-    return copy(subscriptions=newSubscriptions)
-  }
+    val newSubscriptions = subscriptions.add(subscription)
 
-  private val isFull: Boolean
-    private get() = participants.size == capacity
+    return copy(subscriptions = newSubscriptions)
+  }
 
   fun cancelSubscription(userId: String): MeetupEvent {
     val (updatedEvent, removedSub) = remove(userId)
 
     return removedSub.filter { !it.isInWaitingList }
-      .flatMap { firstInWaitingList }
+      .flatMap { subscriptions.firstInWaitingList }
       .map { firstInWaitingList -> updatedEvent.confirm(firstInWaitingList) }
       .orElse(updatedEvent)
   }
 
   private fun confirm(subscription: Subscription): MeetupEvent {
-    val newSubscriptions = subscriptions.map {
-      if (it.userId == subscription.userId) it.confirm() else it
-    }
-    return copy(subscriptions=newSubscriptions.toMutableList())
+    val newSubscriptions = subscriptions.confirm(subscription)
+    return copy(subscriptions = newSubscriptions)
   }
 
   private fun confirm(toConfirm: List<Subscription>): MeetupEvent {
-    val newSubscriptions = subscriptions.map {
-      if (toConfirm.contains(it)) it.confirm() else it
-    }
-    return copy(subscriptions=newSubscriptions.toMutableList())
+    val newSubscriptions = subscriptions.confirm(toConfirm)
+    return copy(subscriptions = newSubscriptions)
   }
 
-  private val firstInWaitingList: Optional<Subscription>
-    private get() =
-      if (waitingList.isEmpty()) Optional.empty()
-      else Optional.of(waitingList.first())
-
   private fun remove(userId: String): Pair<MeetupEvent, Optional<Subscription>> {
-    val toDelete: Optional<Subscription> = subscriptions.stream()
-      .filter { it.userId == userId }
-      .findFirst()
+    val (newSubscriptions, removedSubscription) = subscriptions.removeBy(userId)
 
-    val newSubscriptions: List<Subscription> = toDelete
-      .map {subscriptions - it }
-      .orElse(subscriptions)
-
-    val updatedEvent = copy(subscriptions = newSubscriptions.toMutableList())
-    return Pair(updatedEvent, toDelete)
+    val updatedEvent = copy(subscriptions = newSubscriptions)
+    return Pair(updatedEvent, removedSubscription)
   }
 
   fun updateCapacityTo(newCapacity: Int): MeetupEvent {
     val newSlots = newCapacity - capacity
-    val toConfirm = waitingList
-      .stream()
-      .limit(newSlots.toLong())
-      .toList()
+    val toConfirm = subscriptions.firstInWaitingList(newSlots)
 
     return withCapacity(newCapacity).confirm(toConfirm)
+  }
+
+  private fun withCapacity(capacity: Int): MeetupEvent {
+    return copy(capacity = capacity)
   }
 }

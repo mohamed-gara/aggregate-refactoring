@@ -2,6 +2,7 @@ package kata.persistence;
 
 import kata.MeetupEvent;
 import kata.Subscription;
+import kata.Subscriptions;
 import kata.dbtestutil.MemoryDbTestContext;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
@@ -46,6 +47,6 @@ class MeetupEventRepositoryTest {
     var startTime = LocalDateTime.of(2022, 1, 2, 6, 0);
     var subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC);
     var subscription = new Subscription("userId", subscriptionTime, true);
-    return new MeetupEvent(1L, 50, "eventName", startTime, List.of(subscription));
+    return new MeetupEvent(1L, 50, "eventName", startTime, new Subscriptions(List.of(subscription)));
   }
 }
