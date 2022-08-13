@@ -1,6 +1,7 @@
 package kata
 
 import kata.dbtestutil.MemoryDbTestContext
+import kata.persistence.InMemoryEventStore
 import kata.persistence.MeetupEventRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -12,12 +13,15 @@ import java.time.LocalDateTime
 class MeetupSubscribeTest {
   lateinit var memoryDbTestContext: MemoryDbTestContext
   lateinit var sut: MeetupSubscribe
+  lateinit var eventStore: InMemoryEventStore
 
   @BeforeEach fun setUp() {
     memoryDbTestContext = MemoryDbTestContext.openWithSql("/setup.sql")
     val jdbi = memoryDbTestContext.jdbi
     val repository = MeetupEventRepository(jdbi)
-    sut = MeetupSubscribe(repository)
+    eventStore = InMemoryEventStore()
+
+    sut = MeetupSubscribe(repository, eventStore)
   }
 
   @AfterEach fun tearDown() {

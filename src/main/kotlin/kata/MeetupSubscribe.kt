@@ -2,14 +2,13 @@ package kata
 
 import kata.persistence.MeetupEventRepository
 import java.time.LocalDateTime
-import kata.MeetupEvent
 import java.lang.RuntimeException
-import kata.MeetupEventStatusDto
-import java.util.List
+import kata.persistence.EventStore
 import java.util.stream.Collectors
 
 class MeetupSubscribe(
   private val repository: MeetupEventRepository,
+  private val eventStore: EventStore,
 ) {
 
   fun registerMeetupEvent(eventName: String, eventCapacity: Int, startTime: LocalDateTime): Long {
