@@ -1,0 +1,19 @@
+#
+# https://help.github.com/articles/dealing-with-line-endings/
+#
+# These are explicitly windows files and should use crlf
+*.bat           text eol=crlf
+
+* text=auto
+
+# Java sources
+*.java          text diff=java
+*.kt            text diff=kotlin
+*.groovy        text diff=java
+*.gradle        text diff=java
+*.gradle.kts    text diff=kotlin
+
+# These files are binary and should be left untouched
+# (binary is a macro for -text -diff)
+*.class         binary
+*.jar           binary
