@@ -10,3 +10,7 @@ data class MeetupEventRegistered(
   val startTime: LocalDateTime
 ) : Event
 
+data class UserSubscribedToMeetupEvent(
+  val id: Long,
+  val userId: String,
+) : Event

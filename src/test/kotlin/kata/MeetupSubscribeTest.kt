@@ -58,6 +58,15 @@ class MeetupSubscribeTest {
     val meetupEventStatus = sut.getMeetupEventStatus(meetupEventId)
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob", "Charles")
     assertThat(meetupEventStatus.waitingList).isEmpty()
+
+    assertThat(eventStore.events)
+      .usingRecursiveComparison()
+      .isEqualTo(listOf(
+        MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 50, LocalDateTime.of(2019, 6, 15, 20, 0)),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Charles"),
+      ))
   }
 
   @Test fun should_reject_subscription_with_already_subscribed_user() {

@@ -32,6 +32,9 @@ class MeetupSubscribe(
 
     val updatedMeetup = meetup.subscribe(userId)
 
+    val userSubscribedToMeetupEvent = UserSubscribedToMeetupEvent(meetupEventId, userId)
+    eventStore.append(userSubscribedToMeetupEvent)
+
     repository.save(updatedMeetup)
   }
 
