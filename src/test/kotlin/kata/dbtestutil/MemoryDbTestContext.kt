@@ -1,16 +1,14 @@
 package kata.dbtestutil
 
-import org.jdbi.v3.core.Jdbi
-import kotlin.Throws
-import java.net.URISyntaxException
-import java.io.IOException
-import java.nio.file.Path
-import kata.dbtestutil.MemoryDbTestContext
 import org.jdbi.v3.core.Handle
+import org.jdbi.v3.core.Jdbi
 import java.nio.file.Files
 import java.nio.file.Paths
 
-class MemoryDbTestContext private constructor(val jdbi: Jdbi, private val handle: Handle) {
+class MemoryDbTestContext private constructor(
+  val jdbi: Jdbi,
+  private val handle: Handle
+) {
   fun close() {
     handle.close()
   }

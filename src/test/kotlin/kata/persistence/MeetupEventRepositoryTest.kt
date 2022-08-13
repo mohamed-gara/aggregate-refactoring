@@ -1,52 +1,44 @@
-package kata.persistence;
+package kata.persistence
 
-import kata.MeetupEvent;
-import kata.Subscription;
-import kata.Subscriptions;
-import kata.dbtestutil.MemoryDbTestContext;
-import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import kata.MeetupEvent
+import kata.Subscription
+import kata.Subscriptions
+import kata.dbtestutil.MemoryDbTestContext
+import kata.dbtestutil.MemoryDbTestContext.Companion.openWithSql
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
+internal class MeetupEventRepositoryTest {
 
-import static org.assertj.core.api.Assertions.assertThat;
+  lateinit var memoryDbTestContext: MemoryDbTestContext
+  lateinit var sut: MeetupEventRepository
 
-class MeetupEventRepositoryTest {
-
-  MemoryDbTestContext memoryDbTestContext;
-
-  MeetupEventRepository sut;
-
-  @BeforeEach
-  void setUp() throws Exception {
-    memoryDbTestContext = MemoryDbTestContext.Companion.openWithSql("/setup.sql");
-    Jdbi jdbi = memoryDbTestContext.getJdbi();
-    sut = new MeetupEventRepository(jdbi);
+  @BeforeEach fun setUp() {
+    memoryDbTestContext = openWithSql("/setup.sql")
+    val jdbi = memoryDbTestContext.jdbi
+    sut = MeetupEventRepository(jdbi)
   }
 
-  @AfterEach
-  void tearDown() {
-    memoryDbTestContext.close();
+  @AfterEach fun tearDown() {
+    memoryDbTestContext.close()
   }
 
-  @Test void create_meetup_event() {
-    sut.save(meetup_event());
-
-    MeetupEvent result = sut.findById(1L);
-
-    assertThat(result)
-      .isEqualToComparingFieldByFieldRecursively(meetup_event());
+  @Test fun create_meetup_event() {
+    sut.save(meetup_event())
+    val result = sut.findById(1L)
+    Assertions.assertThat(result)
+      .usingRecursiveComparison()
+      .isEqualTo(meetup_event())
   }
 
-  MeetupEvent meetup_event() {
-    var startTime = LocalDateTime.of(2022, 1, 2, 6, 0);
-    var subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC);
-    var subscription = new Subscription("userId", subscriptionTime, true);
-    return new MeetupEvent(1L, 50, "eventName", startTime, new Subscriptions(List.of(subscription)));
+  fun meetup_event(): MeetupEvent {
+    val startTime = LocalDateTime.of(2022, 1, 2, 6, 0)
+    val subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC)
+    val subscription = Subscription("userId", subscriptionTime, true)
+    return MeetupEvent(1L, 50, "eventName", startTime, Subscriptions(listOf(subscription)))
   }
 }
