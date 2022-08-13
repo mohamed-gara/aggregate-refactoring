@@ -16,6 +16,10 @@ class MeetupSubscribe(
     val meetupEvent = MeetupEvent(id, eventCapacity, eventName, startTime)
 
     repository.save(meetupEvent)
+
+    val meetupEventRegistered = MeetupEventRegistered(id, eventName, eventCapacity, startTime)
+    eventStore.append(meetupEventRegistered)
+
     return id
   }
 

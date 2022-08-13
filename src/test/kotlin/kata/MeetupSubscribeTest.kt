@@ -40,6 +40,12 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.startTime).isEqualTo(startTime)
     assertThat(meetupEventStatus.participants).isEmpty()
     assertThat(meetupEventStatus.waitingList).isEmpty()
+
+    assertThat(eventStore.events)
+      .usingRecursiveComparison()
+      .isEqualTo(listOf(
+        MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 50, startTime)
+      ))
   }
 
   @Test fun should_add_subscription_to_participants() {
