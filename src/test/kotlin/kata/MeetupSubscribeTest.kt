@@ -89,6 +89,16 @@ class MeetupSubscribeTest {
     val meetupEventStatus = sut.getMeetupEventStatus(meetupEventId)
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob")
     assertThat(meetupEventStatus.waitingList).containsExactly("Charles", "David")
+
+    assertThat(eventStore.events)
+      .usingRecursiveComparison()
+      .isEqualTo(listOf(
+        MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
+      ))
   }
 
   @Test fun should_put_first_user_of_waiting_list_into_participants_when_a_participant_cancels() {

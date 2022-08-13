@@ -21,7 +21,7 @@ data class MeetupEvent(
   val users: List<String>
     get() = subscriptions.users
 
-  private val isFull: Boolean
+  val isFull: Boolean
     get() = participants.size == capacity
 
   fun hasSubscriptionFor(userId: String): Boolean {

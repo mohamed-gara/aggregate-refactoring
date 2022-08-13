@@ -14,3 +14,8 @@ data class UserSubscribedToMeetupEvent(
   val id: Long,
   val userId: String,
 ) : Event
+
+data class UserAddedToMeetupEventWaitingList(
+  val id: Long,
+  val userId: String,
+) : Event

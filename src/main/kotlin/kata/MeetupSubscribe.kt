@@ -32,8 +32,13 @@ class MeetupSubscribe(
 
     val updatedMeetup = meetup.subscribe(userId)
 
-    val userSubscribedToMeetupEvent = UserSubscribedToMeetupEvent(meetupEventId, userId)
-    eventStore.append(userSubscribedToMeetupEvent)
+    if (meetup.isFull) {
+      val userAddedToMeetupEventWaitingList = UserAddedToMeetupEventWaitingList(meetupEventId, userId)
+      eventStore.append(userAddedToMeetupEventWaitingList)
+    } else {
+      val userSubscribedToMeetupEvent = UserSubscribedToMeetupEvent(meetupEventId, userId)
+      eventStore.append(userSubscribedToMeetupEvent)
+    }
 
     repository.save(updatedMeetup)
   }
