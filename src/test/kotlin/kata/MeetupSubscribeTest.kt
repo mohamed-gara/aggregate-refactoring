@@ -113,6 +113,17 @@ class MeetupSubscribeTest {
     val meetupEventStatus = sut.getMeetupEventStatus(meetupEventId)
     assertThat(meetupEventStatus.participants).containsExactly("Bob", "Charles")
     assertThat(meetupEventStatus.waitingList).containsExactly("David")
+
+    assertThat(eventStore.events)
+      .usingRecursiveComparison()
+      .isEqualTo(listOf(
+        MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
+        UserCancelledMeetupSubscription(meetupEventId, "Alice"),
+      ))
   }
 
   @Test fun should_not_change_participants_list_when_a_user_in_waiting_list_cancels() {
@@ -127,6 +138,17 @@ class MeetupSubscribeTest {
     val meetupEventStatus = sut.getMeetupEventStatus(meetupEventId)
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob")
     assertThat(meetupEventStatus.waitingList).containsExactly("David")
+
+    assertThat(eventStore.events)
+      .usingRecursiveComparison()
+      .isEqualTo(listOf(
+        MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
+        UserCancelledMeetupSubscription(meetupEventId, "Charles"),
+      ))
   }
 
   @Test fun should_add_participants_from_waiting_list_when_capacity_is_increased() {

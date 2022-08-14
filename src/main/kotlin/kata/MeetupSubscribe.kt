@@ -49,6 +49,9 @@ class MeetupSubscribe(
     val updatedMeetupEvent = meetup.cancelSubscription(userId)
 
     repository.save(updatedMeetupEvent)
+
+    val userCanceledSubscription = UserCancelledMeetupSubscription(meetupEventId, userId)
+    eventStore.append(userCanceledSubscription)
   }
 
   fun increaseCapacity(meetupEventId: Long, newCapacity: Int) {
