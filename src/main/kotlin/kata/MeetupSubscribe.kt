@@ -61,6 +61,9 @@ class MeetupSubscribe(
     if (oldCapacity < newCapacity) {
       val updatedMeetupEvent = meetupEvent.updateCapacityTo(newCapacity)
       repository.save(updatedMeetupEvent)
+
+      val meetupCapacityIncreased = MeetupEventCapacityIncreased(meetupEventId, newCapacity)
+      eventStore.append(meetupCapacityIncreased)
     }
   }
 

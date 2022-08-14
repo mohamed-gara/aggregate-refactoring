@@ -166,6 +166,18 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.eventCapacity).isEqualTo(4)
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob", "Charles", "David")
     assertThat(meetupEventStatus.waitingList).containsExactly("Emily")
+
+    assertThat(eventStore.events)
+      .usingRecursiveComparison()
+      .isEqualTo(listOf(
+        MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Charles"),
+        UserSubscribedToMeetupEvent(meetupEventId, "David"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Emily"),
+        MeetupEventCapacityIncreased(meetupEventId, 4),
+      ))
   }
 
   fun registerAMeetupWithCapacity(eventCapacity: Int): Long {

@@ -24,3 +24,8 @@ data class UserCancelledMeetupSubscription(
   val id: Long,
   val userId: String,
 ) : Event
+
+data class MeetupEventCapacityIncreased(
+  val id: Long,
+  val newCapacity: Int
+) : Event
