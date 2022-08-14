@@ -1,6 +1,7 @@
 package kata.persistence
 
 import kata.MeetupEvent
+import kata.MeetupEventState
 import kata.Subscription
 import kata.Subscriptions
 import kata.dbtestutil.MemoryDbTestContext
@@ -39,6 +40,6 @@ internal class MeetupEventRepositoryTest {
     val startTime = LocalDateTime.of(2022, 1, 2, 6, 0)
     val subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC)
     val subscription = Subscription("userId", subscriptionTime, true)
-    return MeetupEvent(1L, 50, "eventName", startTime, Subscriptions(listOf(subscription)))
+    return MeetupEvent(MeetupEventState(1L, 50, "eventName", startTime, Subscriptions(listOf(subscription))))
   }
 }

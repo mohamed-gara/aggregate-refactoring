@@ -4,13 +4,16 @@ import java.time.LocalDateTime
 import java.time.Instant
 import java.util.*
 
-data class MeetupEvent(
+
+data class MeetupEventState(
   val id: Long,
   val capacity: Int,
   val eventName: String,
   val startTime: LocalDateTime,
   val subscriptions: Subscriptions = Subscriptions(listOf())
 ) {
+  val users: List<String>
+    get() = subscriptions.users
 
   val waitingList: List<Subscription>
     get() = subscriptions.waitingList
@@ -18,57 +21,59 @@ data class MeetupEvent(
   val participants: List<Subscription>
     get() = subscriptions.participants
 
-  val users: List<String>
-    get() = subscriptions.users
-
   val isFull: Boolean
     get() = participants.size == capacity
 
   fun hasSubscriptionFor(userId: String): Boolean {
     return subscriptions.findBy(userId) != null
   }
+}
+
+data class MeetupEvent(
+  val state: MeetupEventState
+) {
 
   fun subscribe(userId: String): MeetupEvent {
-    val subscription = Subscription(userId, Instant.now(), isFull)
-    val newSubscriptions = subscriptions.add(subscription)
+    val subscription = Subscription(userId, Instant.now(), state.isFull)
+    val newSubscriptions = state.subscriptions.add(subscription)
 
-    return copy(subscriptions = newSubscriptions)
+    return copy(state = state.copy(subscriptions = newSubscriptions))
   }
 
   fun cancelSubscription(userId: String): MeetupEvent {
     val (updatedEvent, removedSub) = remove(userId)
 
     return removedSub.filter { !it.isInWaitingList }
-      .flatMap { subscriptions.firstInWaitingList }
+      .flatMap { state.subscriptions.firstInWaitingList }
       .map { firstInWaitingList -> updatedEvent.confirm(firstInWaitingList) }
       .orElse(updatedEvent)
   }
 
   private fun confirm(subscription: Subscription): MeetupEvent {
-    val newSubscriptions = subscriptions.confirm(subscription)
-    return copy(subscriptions = newSubscriptions)
+    val newSubscriptions = state.subscriptions.confirm(subscription)
+    return copy(state = state.copy(subscriptions = newSubscriptions))
   }
 
   private fun confirm(toConfirm: List<Subscription>): MeetupEvent {
-    val newSubscriptions = subscriptions.confirm(toConfirm)
-    return copy(subscriptions = newSubscriptions)
+    val newSubscriptions = state.subscriptions.confirm(toConfirm)
+    return copy(state = state.copy(subscriptions = newSubscriptions))
   }
 
   private fun remove(userId: String): Pair<MeetupEvent, Optional<Subscription>> {
-    val (newSubscriptions, removedSubscription) = subscriptions.removeBy(userId)
+    val (newSubscriptions, removedSubscription) = state.subscriptions.removeBy(userId)
 
-    val updatedEvent = copy(subscriptions = newSubscriptions)
+    val updatedEvent = copy(state = state.copy(subscriptions = newSubscriptions))
     return Pair(updatedEvent, removedSubscription)
   }
 
   fun updateCapacityTo(newCapacity: Int): MeetupEvent {
-    val newSlots = newCapacity - capacity
-    val toConfirm = subscriptions.firstInWaitingList(newSlots)
+    val newSlots = newCapacity - state.capacity
+    val toConfirm = state.subscriptions.firstInWaitingList(newSlots)
 
     return withCapacity(newCapacity).confirm(toConfirm)
   }
 
   private fun withCapacity(capacity: Int): MeetupEvent {
-    return copy(capacity = capacity)
+    return copy(state = state.copy(capacity = capacity))
   }
 }

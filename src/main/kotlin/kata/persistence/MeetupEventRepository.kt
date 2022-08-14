@@ -1,6 +1,7 @@
 package kata.persistence
 
 import kata.MeetupEvent
+import kata.MeetupEventState
 import kata.Subscription
 import kata.Subscriptions
 import org.jdbi.v3.core.Handle
@@ -38,11 +39,13 @@ class MeetupEventRepository(private val jdbi: Jdbi) {
   private fun mapper(subscriptions: Subscriptions): RowMapper<MeetupEvent> {
     return RowMapper { rs: ResultSet, ctx: StatementContext? ->
       MeetupEvent(
-        rs.getLong("id"),
-        rs.getInt("capacity"),
-        rs.getString("event_name"),
-        mapTo(rs, "start_time", LocalDateTime::class.java, ctx!!),
-        subscriptions
+        MeetupEventState(
+          rs.getLong("id"),
+          rs.getInt("capacity"),
+          rs.getString("event_name"),
+          mapTo(rs, "start_time", LocalDateTime::class.java, ctx!!),
+          subscriptions
+        )
       )
     }
   }
@@ -61,25 +64,27 @@ class MeetupEventRepository(private val jdbi: Jdbi) {
 
   fun save(meetupEvent: MeetupEvent) {
     jdbi.useTransaction<RuntimeException> { handle: Handle? ->
+      val state = meetupEvent.state
       upsertMeetupEvent(meetupEvent).useHandle(handle)
-      if (meetupEvent.subscriptions != null) upsertSubscriptions(meetupEvent.id, meetupEvent.subscriptions.list).useHandle(
+      if (state.subscriptions != null) upsertSubscriptions(state.id, state.subscriptions.list).useHandle(
         handle
       )
-      deleteMeetupSubscriptionsNotInUserIds(meetupEvent.id, meetupEvent.users).useHandle(handle)
+      deleteMeetupSubscriptionsNotInUserIds(state.id, state.users).useHandle(handle)
     }
   }
 
   private fun upsertMeetupEvent(meetupEvent: MeetupEvent): HandleConsumer<RuntimeException> {
+    val state = meetupEvent.state
     val sql = "" +
         "MERGE INTO MEETUP_EVENT (id, event_name, start_time, capacity) " +
         "KEY (id) " +
         "VALUES (:id, :event_name, :start_time, :capacity)"
     return HandleConsumer { handle: Handle ->
       handle.createUpdate(sql)
-        .bind("id", meetupEvent.id)
-        .bind("event_name", meetupEvent.eventName)
-        .bind("start_time", meetupEvent.startTime)
-        .bind("capacity", meetupEvent.capacity)
+        .bind("id", state.id)
+        .bind("event_name", state.eventName)
+        .bind("start_time", state.startTime)
+        .bind("capacity", state.capacity)
         .execute()
     }
   }

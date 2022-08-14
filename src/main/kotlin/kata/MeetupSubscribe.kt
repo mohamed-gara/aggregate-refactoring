@@ -13,7 +13,7 @@ class MeetupSubscribe(
 
   fun registerMeetupEvent(eventName: String, eventCapacity: Int, startTime: LocalDateTime): Long {
     val id = repository.generateId()
-    val meetupEvent = MeetupEvent(id, eventCapacity, eventName, startTime)
+    val meetupEvent = MeetupEvent(MeetupEventState(id, eventCapacity, eventName, startTime))
 
     repository.save(meetupEvent)
 
@@ -26,13 +26,13 @@ class MeetupSubscribe(
   fun subscribeUserToMeetupEvent(userId: String, meetupEventId: Long) {
     val meetup = repository.findById(meetupEventId)
 
-    if (meetup.hasSubscriptionFor(userId)) {
+    if (meetup.state.hasSubscriptionFor(userId)) {
       throw RuntimeException(String.format("User %s already has a subscription", userId))
     }
 
     val updatedMeetup = meetup.subscribe(userId)
 
-    if (meetup.isFull) {
+    if (meetup.state.isFull) {
       val userAddedToMeetupEventWaitingList = UserAddedToMeetupEventWaitingList(meetupEventId, userId)
       eventStore.append(userAddedToMeetupEventWaitingList)
     } else {
@@ -53,10 +53,10 @@ class MeetupSubscribe(
     val userCanceledSubscription = UserCancelledMeetupSubscription(meetupEventId, userId)
     eventStore.append(userCanceledSubscription)
 
-    if (meetup.participants.any { it.userId == userId }) {
+    if (meetup.state.participants.any { it.userId == userId }) {
       val userMovedToParticipants = UserMovedFromWaitingListToParticipants(
         meetupEventId,
-        updatedMeetupEvent.participants.last().userId,
+        updatedMeetupEvent.state.participants.last().userId,
         userCanceledSubscription
       )
       eventStore.append(userMovedToParticipants)
@@ -66,7 +66,7 @@ class MeetupSubscribe(
   fun increaseCapacity(meetupEventId: Long, newCapacity: Int) {
     val meetupEvent = repository.findById(meetupEventId)
 
-    val oldCapacity = meetupEvent.capacity
+    val oldCapacity = meetupEvent.state.capacity
     if (oldCapacity < newCapacity) {
       val updatedMeetupEvent = meetupEvent.updateCapacityTo(newCapacity)
       repository.save(updatedMeetupEvent)
@@ -76,7 +76,7 @@ class MeetupSubscribe(
 
       val movedUsers = UsersMovedFromWaitingListToParticipants(
         meetupEventId,
-        meetupEvent.subscriptions.firstInWaitingList(newCapacity - oldCapacity).map { it.userId },
+        meetupEvent.state.subscriptions.firstInWaitingList(newCapacity - oldCapacity).map { it.userId },
         meetupCapacityIncreased
       )
       eventStore.append(movedUsers)
@@ -84,7 +84,7 @@ class MeetupSubscribe(
   }
 
   fun getMeetupEventStatus(meetupEventId: Long): MeetupEventStatusDto {
-    val meetupEvent = repository.findById(meetupEventId)
+    val meetupEvent = repository.findById(meetupEventId).state
 
     return MeetupEventStatusDto(
       meetupId = meetupEvent.id,
