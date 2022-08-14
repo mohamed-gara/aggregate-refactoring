@@ -29,3 +29,9 @@ data class MeetupEventCapacityIncreased(
   val id: Long,
   val newCapacity: Int
 ) : Event
+
+data class UserMovedFromWaitingListToParticipants(
+  val id: Long,
+  val userId: String,
+  val cause: Event
+) : Event

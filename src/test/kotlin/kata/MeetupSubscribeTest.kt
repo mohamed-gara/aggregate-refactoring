@@ -123,6 +123,11 @@ class MeetupSubscribeTest {
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
         UserCancelledMeetupSubscription(meetupEventId, "Alice"),
+        UserMovedFromWaitingListToParticipants(
+          meetupEventId,
+          "Charles",
+          UserCancelledMeetupSubscription(meetupEventId, "Alice")
+        ),
       ))
   }
 

@@ -52,6 +52,15 @@ class MeetupSubscribe(
 
     val userCanceledSubscription = UserCancelledMeetupSubscription(meetupEventId, userId)
     eventStore.append(userCanceledSubscription)
+
+    if (meetup.participants.any { it.userId == userId }) {
+      val userMovedToParticipants = UserMovedFromWaitingListToParticipants(
+        meetupEventId,
+        updatedMeetupEvent.participants.last().userId,
+        userCanceledSubscription
+      )
+      eventStore.append(userMovedToParticipants)
+    }
   }
 
   fun increaseCapacity(meetupEventId: Long, newCapacity: Int) {
