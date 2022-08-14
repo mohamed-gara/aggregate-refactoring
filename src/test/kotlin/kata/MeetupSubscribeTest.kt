@@ -1,10 +1,12 @@
 package kata
 
 import kata.dbtestutil.MemoryDbTestContext
+import kata.persistence.Event
 import kata.persistence.InMemoryEventStore
 import kata.persistence.MeetupEventRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.ListAssert
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -42,11 +44,10 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.participants).isEmpty()
     assertThat(meetupEventStatus.waitingList).isEmpty()
 
-    assertThat(eventStore.events)
-      .usingRecursiveComparison()
-      .isEqualTo(listOf(
+    assertThatEventStore()
+      .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 50, startTime)
-      ))
+      )
   }
 
   @Test fun should_add_subscription_to_participants() {
@@ -60,14 +61,13 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob", "Charles")
     assertThat(meetupEventStatus.waitingList).isEmpty()
 
-    assertThat(eventStore.events)
-      .usingRecursiveComparison()
-      .isEqualTo(listOf(
+    assertThatEventStore()
+      .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 50, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
         UserSubscribedToMeetupEvent(meetupEventId, "Charles"),
-      ))
+      )
   }
 
   @Test fun should_reject_subscription_with_already_subscribed_user() {
@@ -91,15 +91,14 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob")
     assertThat(meetupEventStatus.waitingList).containsExactly("Charles", "David")
 
-    assertThat(eventStore.events)
-      .usingRecursiveComparison()
-      .isEqualTo(listOf(
+    assertThatEventStore()
+      .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
-      ))
+      )
   }
 
   @Test fun should_put_first_user_of_waiting_list_into_participants_when_a_participant_cancels() {
@@ -115,9 +114,8 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.participants).containsExactly("Bob", "Charles")
     assertThat(meetupEventStatus.waitingList).containsExactly("David")
 
-    assertThat(eventStore.events)
-      .usingRecursiveComparison()
-      .isEqualTo(listOf(
+    assertThatEventStore()
+      .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
@@ -129,7 +127,7 @@ class MeetupSubscribeTest {
           "Charles",
           UserCancelledMeetupSubscription(meetupEventId, "Alice")
         ),
-      ))
+      )
   }
 
   @Test fun should_not_change_participants_list_when_a_user_in_waiting_list_cancels() {
@@ -145,16 +143,15 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob")
     assertThat(meetupEventStatus.waitingList).containsExactly("David")
 
-    assertThat(eventStore.events)
-      .usingRecursiveComparison()
-      .isEqualTo(listOf(
+    assertThatEventStore()
+      .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
         UserCancelledMeetupSubscription(meetupEventId, "Charles"),
-      ))
+      )
   }
 
   @Test fun should_add_participants_from_waiting_list_when_capacity_is_increased() {
@@ -170,12 +167,7 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatusBeforeCapacityChange.participants).containsExactly("Alice", "Bob")
     assertThat(meetupEventStatusBeforeCapacityChange.waitingList).containsExactly("Charles", "David", "Emily")
 
-    assertThat(eventStore.events)
-      .usingRecursiveFieldByFieldElementComparator(
-        RecursiveComparisonConfiguration.builder()
-          .withStrictTypeChecking(true)
-          .build()
-      )
+    assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
@@ -193,12 +185,7 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.participants).containsExactly("Alice", "Bob", "Charles", "David")
     assertThat(meetupEventStatus.waitingList).containsExactly("Emily")
 
-    assertThat(eventStore.events)
-      .usingRecursiveFieldByFieldElementComparator(
-        RecursiveComparisonConfiguration.builder()
-          .withStrictTypeChecking(true)
-          .build()
-      )
+    assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
@@ -214,6 +201,13 @@ class MeetupSubscribeTest {
         ),
       )
   }
+
+  private fun assertThatEventStore(): ListAssert<Event> = assertThat(eventStore.events)
+    .usingRecursiveFieldByFieldElementComparator(
+      RecursiveComparisonConfiguration.builder()
+        .withStrictTypeChecking(true)
+        .build()
+    )
 
   fun registerAMeetupWithCapacity(eventCapacity: Int): Long {
     val startTime = LocalDateTime.of(2019, 6, 15, 20, 0)
