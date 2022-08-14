@@ -30,8 +30,11 @@ data class MeetupEventState(
 }
 
 data class MeetupEvent(
-  val state: MeetupEventState
+  val state: MeetupEventState,
+  val events: List<MeetupBaseEvent>,
 ) {
+
+  constructor(state: MeetupEventState) : this(state, listOf())
 
   fun subscribe(userId: String): MeetupEvent {
     val subscription = Subscription(userId, Instant.now(), state.isFull)
