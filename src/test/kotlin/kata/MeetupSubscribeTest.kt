@@ -5,6 +5,7 @@ import kata.persistence.InMemoryEventStore
 import kata.persistence.MeetupEventRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -164,6 +165,26 @@ class MeetupSubscribeTest {
     sut.subscribeUserToMeetupEvent("David", meetupEventId)
     sut.subscribeUserToMeetupEvent("Emily", meetupEventId)
 
+    val meetupEventStatusBeforeCapacityChange = sut.getMeetupEventStatus(meetupEventId)
+    assertThat(meetupEventStatusBeforeCapacityChange.eventCapacity).isEqualTo(2)
+    assertThat(meetupEventStatusBeforeCapacityChange.participants).containsExactly("Alice", "Bob")
+    assertThat(meetupEventStatusBeforeCapacityChange.waitingList).containsExactly("Charles", "David", "Emily")
+
+    assertThat(eventStore.events)
+      .usingRecursiveFieldByFieldElementComparator(
+        RecursiveComparisonConfiguration.builder()
+          .withStrictTypeChecking(true)
+          .build()
+      )
+      .containsExactly(
+        MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Emily"),
+      )
+
     val newCapacity = 4
     sut.increaseCapacity(meetupEventId, newCapacity)
 
@@ -173,16 +194,25 @@ class MeetupSubscribeTest {
     assertThat(meetupEventStatus.waitingList).containsExactly("Emily")
 
     assertThat(eventStore.events)
-      .usingRecursiveComparison()
-      .isEqualTo(listOf(
+      .usingRecursiveFieldByFieldElementComparator(
+        RecursiveComparisonConfiguration.builder()
+          .withStrictTypeChecking(true)
+          .build()
+      )
+      .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Charles"),
-        UserSubscribedToMeetupEvent(meetupEventId, "David"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Emily"),
         MeetupEventCapacityIncreased(meetupEventId, 4),
-      ))
+        UsersMovedFromWaitingListToParticipants(
+          meetupEventId,
+          listOf("Charles", "David"),
+          MeetupEventCapacityIncreased(meetupEventId, 4)
+        ),
+      )
   }
 
   fun registerAMeetupWithCapacity(eventCapacity: Int): Long {

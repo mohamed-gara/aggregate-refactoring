@@ -35,3 +35,9 @@ data class UserMovedFromWaitingListToParticipants(
   val userId: String,
   val cause: Event
 ) : Event
+
+data class UsersMovedFromWaitingListToParticipants(
+  val id: Long,
+  val userIdList: List<String>,
+  val cause: Event
+) : Event
