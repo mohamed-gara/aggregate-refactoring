@@ -1,9 +1,6 @@
 package kata.persistence
 
-import kata.MeetupEvent
-import kata.MeetupEventState
-import kata.Subscription
-import kata.Subscriptions
+import kata.*
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.HandleConsumer
 import org.jdbi.v3.core.Jdbi
@@ -11,10 +8,12 @@ import org.jdbi.v3.core.mapper.RowMapper
 import org.jdbi.v3.core.statement.StatementContext
 import java.sql.ResultSet
 import java.time.Instant
-import java.time.LocalDateTime
 import java.util.function.Consumer
 
-class MeetupEventRepository(private val jdbi: Jdbi) {
+class MeetupEventRepository(
+  private val jdbi: Jdbi,
+  private val eventStore: EventStore,
+) {
   fun generateId(): Long {
     return jdbi.withHandle<Long, RuntimeException> { handle: Handle ->
       handle
@@ -25,25 +24,28 @@ class MeetupEventRepository(private val jdbi: Jdbi) {
   }
 
   fun findById(meetupEventId: Long): MeetupEvent {
+    val meetupEvents = eventStore.readStream(meetupEventId)
+    val stateFromEvents = projectStateFrom(meetupEvents as List<MeetupBaseEvent>)
+
     val subscriptions = findSubscriptionsOf(meetupEventId)
     val sql = "SELECT * FROM MEETUP_EVENT WHERE id = :id"
     return jdbi.withHandle<MeetupEvent?, RuntimeException> { handle: Handle ->
       handle.createQuery(sql)
         .bind("id", meetupEventId)
-        .map(mapper(Subscriptions(subscriptions)))
+        .map(mapper(stateFromEvents, Subscriptions(subscriptions)))
         .findOne()
         .orElse(null)
     }
   }
 
-  private fun mapper(subscriptions: Subscriptions): RowMapper<MeetupEvent> {
+  private fun mapper(stateFromEvents: MeetupEventState, subscriptions: Subscriptions): RowMapper<MeetupEvent> {
     return RowMapper { rs: ResultSet, ctx: StatementContext? ->
       MeetupEvent(
         MeetupEventState(
-          rs.getLong("id"),
+          stateFromEvents.id,
           rs.getInt("capacity"),
-          rs.getString("event_name"),
-          mapTo(rs, "start_time", LocalDateTime::class.java, ctx!!),
+          stateFromEvents.eventName,
+          stateFromEvents.startTime,
           subscriptions
         )
       )

@@ -16,13 +16,12 @@ import java.time.LocalDateTime
 class MeetupSubscribeTest {
   lateinit var memoryDbTestContext: MemoryDbTestContext
   lateinit var sut: MeetupSubscribe
-  lateinit var eventStore: InMemoryEventStore
+  val eventStore = InMemoryEventStore()
 
   @BeforeEach fun setUp() {
     memoryDbTestContext = MemoryDbTestContext.openWithSql("/setup.sql")
     val jdbi = memoryDbTestContext.jdbi
-    val repository = MeetupEventRepository(jdbi)
-    eventStore = InMemoryEventStore()
+    val repository = MeetupEventRepository(jdbi, eventStore)
 
     sut = MeetupSubscribe(repository, eventStore)
   }

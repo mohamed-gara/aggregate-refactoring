@@ -1,9 +1,6 @@
 package kata.persistence
 
-import kata.MeetupEvent
-import kata.MeetupEventState
-import kata.Subscription
-import kata.Subscriptions
+import kata.*
 import kata.dbtestutil.MemoryDbTestContext
 import kata.dbtestutil.MemoryDbTestContext.Companion.openWithSql
 import org.assertj.core.api.Assertions
@@ -17,11 +14,12 @@ internal class MeetupEventRepositoryTest {
 
   lateinit var memoryDbTestContext: MemoryDbTestContext
   lateinit var sut: MeetupEventRepository
+  val eventStore = InMemoryEventStore()
 
   @BeforeEach fun setUp() {
     memoryDbTestContext = openWithSql("/setup.sql")
     val jdbi = memoryDbTestContext.jdbi
-    sut = MeetupEventRepository(jdbi)
+    sut = MeetupEventRepository(jdbi, eventStore)
   }
 
   @AfterEach fun tearDown() {
@@ -30,7 +28,10 @@ internal class MeetupEventRepositoryTest {
 
   @Test fun create_meetup_event() {
     sut.save(meetup_event())
+    eventStore.append(MeetupEventRegistered(1, "eventName", 50, LocalDateTime.of(2022, 1, 2, 6, 0)))
+
     val result = sut.findById(1L)
+
     Assertions.assertThat(result)
       .usingRecursiveComparison()
       .isEqualTo(meetup_event())
