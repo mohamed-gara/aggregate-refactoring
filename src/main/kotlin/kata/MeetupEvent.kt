@@ -48,6 +48,11 @@ fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
         val (newSubscriptions) = state.subscriptions.removeBy(event.userId)
         return@fold state.copy(subscriptions = newSubscriptions)
       }
+      is UserMovedFromWaitingListToParticipants -> {
+        val userSubscription = state.subscriptions.findBy(event.userId)
+        val newSubscriptions = if(userSubscription != null) state.subscriptions.confirm(userSubscription) else state.subscriptions
+        return@fold state.copy(subscriptions = newSubscriptions)
+      }
       else -> state
     }
   }
