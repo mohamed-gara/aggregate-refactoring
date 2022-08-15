@@ -39,6 +39,11 @@ fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
         val newSubscriptions = state.subscriptions.add(subscription)
         return@fold state.copy(subscriptions = newSubscriptions)
       }
+      is UserAddedToMeetupEventWaitingList -> {
+        val subscription = Subscription(event.userId, event.registrationTime, true)
+        val newSubscriptions = state.subscriptions.add(subscription)
+        return@fold state.copy(subscriptions = newSubscriptions)
+      }
       else -> state
     }
   }

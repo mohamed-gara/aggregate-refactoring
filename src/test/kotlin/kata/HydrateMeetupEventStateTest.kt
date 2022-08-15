@@ -52,4 +52,28 @@ internal class HydrateMeetupEventStateTest {
         ))
       ))
   }
+
+  @Test fun user_added_to_meetup_waiting_list_event() {
+    val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
+    val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
+
+    val state = projectStateFrom(listOf(
+      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserSubscribedToMeetupEvent(1, "user1", userRegistrationTime),
+      UserAddedToMeetupEventWaitingList(1, "user2", userRegistrationTime)
+    ))
+
+    assertThat(state)
+      .usingRecursiveComparison()
+      .isEqualTo(MeetupEventState(
+        1,
+        1,
+        "Coding Dojo",
+        meetupRegistrationTime,
+        Subscriptions(listOf(
+          Subscription("user1", userRegistrationTime, false),
+          Subscription("user2", userRegistrationTime, true),
+        ))
+      ))
+  }
 }

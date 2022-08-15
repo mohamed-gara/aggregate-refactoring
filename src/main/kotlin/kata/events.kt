@@ -25,7 +25,8 @@ data class UserSubscribedToMeetupEvent(
 data class UserAddedToMeetupEventWaitingList(
   override val id: Long,
   val userId: String,
-) : MeetupBaseEvent(id)
+  val registrationTime: Instant,
+  ) : MeetupBaseEvent(id)
 
 data class UserCancelledMeetupSubscription(
   override val id: Long,

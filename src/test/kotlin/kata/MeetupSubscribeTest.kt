@@ -99,8 +99,8 @@ class MeetupSubscribeTest {
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles", now),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David", now),
       )
   }
 
@@ -122,8 +122,8 @@ class MeetupSubscribeTest {
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles", now),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David", now),
         UserCancelledMeetupSubscription(meetupEventId, "Alice"),
         UserMovedFromWaitingListToParticipants(
           meetupEventId,
@@ -151,8 +151,8 @@ class MeetupSubscribeTest {
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles", now),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David", now),
         UserCancelledMeetupSubscription(meetupEventId, "Charles"),
       )
   }
@@ -175,9 +175,9 @@ class MeetupSubscribeTest {
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "Emily"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles", now),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David", now),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Emily", now),
       )
 
     val newCapacity = 4
@@ -193,9 +193,9 @@ class MeetupSubscribeTest {
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
         UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
         UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
-        UserAddedToMeetupEventWaitingList(meetupEventId, "Emily"),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Charles", now),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "David", now),
+        UserAddedToMeetupEventWaitingList(meetupEventId, "Emily", now),
         MeetupEventCapacityIncreased(meetupEventId, 4),
         UsersMovedFromWaitingListToParticipants(
           meetupEventId,
