@@ -76,4 +76,25 @@ internal class HydrateMeetupEventStateTest {
         ))
       ))
   }
+
+  @Test fun user_cancelled_meetup_event() {
+    val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
+    val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
+
+    val state = projectStateFrom(listOf(
+      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserSubscribedToMeetupEvent(1, "user1", userRegistrationTime),
+      UserCancelledMeetupSubscription(1, "user1")
+    ))
+
+    assertThat(state)
+      .usingRecursiveComparison()
+      .isEqualTo(MeetupEventState(
+        1,
+        1,
+        "Coding Dojo",
+        meetupRegistrationTime,
+        Subscriptions(listOf())
+      ))
+  }
 }

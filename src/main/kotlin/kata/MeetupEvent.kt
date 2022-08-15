@@ -44,6 +44,10 @@ fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
         val newSubscriptions = state.subscriptions.add(subscription)
         return@fold state.copy(subscriptions = newSubscriptions)
       }
+      is UserCancelledMeetupSubscription -> {
+        val (newSubscriptions) = state.subscriptions.removeBy(event.userId)
+        return@fold state.copy(subscriptions = newSubscriptions)
+      }
       else -> state
     }
   }
