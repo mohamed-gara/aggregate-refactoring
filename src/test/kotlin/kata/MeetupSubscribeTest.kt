@@ -11,19 +11,23 @@ import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguratio
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset.UTC
 
 class MeetupSubscribeTest {
   lateinit var memoryDbTestContext: MemoryDbTestContext
   lateinit var sut: MeetupSubscribe
   val eventStore = InMemoryEventStore()
+  val now: Instant = Instant.now()
 
   @BeforeEach fun setUp() {
     memoryDbTestContext = MemoryDbTestContext.openWithSql("/setup.sql")
     val jdbi = memoryDbTestContext.jdbi
     val repository = MeetupEventRepository(jdbi, eventStore)
 
-    sut = MeetupSubscribe(repository, eventStore)
+    sut = MeetupSubscribe(repository, eventStore, Clock.fixed(now, UTC))
   }
 
   @AfterEach fun tearDown() {
@@ -63,9 +67,9 @@ class MeetupSubscribeTest {
     assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 50, LocalDateTime.of(2019, 6, 15, 20, 0)),
-        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Charles"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
+        UserSubscribedToMeetupEvent(meetupEventId, "Charles", now),
       )
   }
 
@@ -93,8 +97,8 @@ class MeetupSubscribeTest {
     assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
-        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
       )
@@ -116,8 +120,8 @@ class MeetupSubscribeTest {
     assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
-        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
         UserCancelledMeetupSubscription(meetupEventId, "Alice"),
@@ -145,8 +149,8 @@ class MeetupSubscribeTest {
     assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
-        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
         UserCancelledMeetupSubscription(meetupEventId, "Charles"),
@@ -169,8 +173,8 @@ class MeetupSubscribeTest {
     assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
-        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Emily"),
@@ -187,8 +191,8 @@ class MeetupSubscribeTest {
     assertThatEventStore()
       .containsExactly(
         MeetupEventRegistered(meetupEventId, "Coding dojo session 1", 2, LocalDateTime.of(2019, 6, 15, 20, 0)),
-        UserSubscribedToMeetupEvent(meetupEventId, "Alice"),
-        UserSubscribedToMeetupEvent(meetupEventId, "Bob"),
+        UserSubscribedToMeetupEvent(meetupEventId, "Alice", now),
+        UserSubscribedToMeetupEvent(meetupEventId, "Bob", now),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Charles"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "David"),
         UserAddedToMeetupEventWaitingList(meetupEventId, "Emily"),

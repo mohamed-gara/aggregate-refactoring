@@ -1,6 +1,7 @@
 package kata
 
 import kata.persistence.Event
+import java.time.Instant
 import java.time.LocalDateTime
 
 
@@ -18,6 +19,7 @@ data class MeetupEventRegistered(
 data class UserSubscribedToMeetupEvent(
   override val id: Long,
   val userId: String,
+  val registrationTime: Instant,
 ) : MeetupBaseEvent(id)
 
 data class UserAddedToMeetupEventWaitingList(

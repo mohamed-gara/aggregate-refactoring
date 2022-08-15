@@ -45,8 +45,8 @@ data class MeetupEvent(
 
   constructor(state: MeetupEventState) : this(state, listOf())
 
-  fun subscribe(userId: String): MeetupEvent {
-    val subscription = Subscription(userId, Instant.now(), state.isFull)
+  fun subscribe(userId: String, registrationTime: Instant): MeetupEvent {
+    val subscription = Subscription(userId, registrationTime, state.isFull)
     val newSubscriptions = state.subscriptions.add(subscription)
 
     return copy(state = state.copy(subscriptions = newSubscriptions))

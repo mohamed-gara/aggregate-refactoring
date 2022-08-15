@@ -4,11 +4,14 @@ import kata.persistence.MeetupEventRepository
 import java.time.LocalDateTime
 import java.lang.RuntimeException
 import kata.persistence.EventStore
+import java.time.Clock
+import java.time.Instant
 import java.util.stream.Collectors
 
 class MeetupSubscribe(
   private val repository: MeetupEventRepository,
   private val eventStore: EventStore,
+  private val clock: Clock,
 ) {
 
   fun registerMeetupEvent(eventName: String, eventCapacity: Int, startTime: LocalDateTime): Long {
@@ -26,13 +29,14 @@ class MeetupSubscribe(
       throw RuntimeException(String.format("User %s already has a subscription", userId))
     }
 
-    val updatedMeetup = meetup.subscribe(userId)
+    val registrationTime = Instant.now(clock)
+    val updatedMeetup = meetup.subscribe(userId, registrationTime)
 
     if (meetup.state.isFull) {
       val userAddedToMeetupEventWaitingList = UserAddedToMeetupEventWaitingList(meetupEventId, userId)
       eventStore.append(userAddedToMeetupEventWaitingList)
     } else {
-      val userSubscribedToMeetupEvent = UserSubscribedToMeetupEvent(meetupEventId, userId)
+      val userSubscribedToMeetupEvent = UserSubscribedToMeetupEvent(meetupEventId, userId, registrationTime)
       eventStore.append(userSubscribedToMeetupEvent)
     }
 
