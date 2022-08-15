@@ -34,6 +34,11 @@ fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
     state, event -> when(event) {
       is MeetupEventRegistered -> MeetupEventState(event.id, event.eventCapacity, event.eventName, event.startTime)
       is MeetupEventCapacityIncreased -> state.copy(capacity = event.newCapacity)
+      is UserSubscribedToMeetupEvent -> {
+        val subscription = Subscription(event.userId, event.registrationTime, false)
+        val newSubscriptions = state.subscriptions.add(subscription)
+        return@fold state.copy(subscriptions = newSubscriptions)
+      }
       else -> state
     }
   }

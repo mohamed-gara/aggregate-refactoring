@@ -29,6 +29,8 @@ internal class MeetupEventRepositoryTest {
   @Test fun create_meetup_event() {
     sut.save(meetup_event())
     eventStore.append(MeetupEventRegistered(1, "eventName", 50, LocalDateTime.of(2022, 1, 2, 6, 0)))
+    val subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC)
+    eventStore.append(UserSubscribedToMeetupEvent(1, "userId", subscriptionTime))
 
     val result = sut.findById(1L)
 
@@ -40,7 +42,7 @@ internal class MeetupEventRepositoryTest {
   fun meetup_event(): MeetupEvent {
     val startTime = LocalDateTime.of(2022, 1, 2, 6, 0)
     val subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC)
-    val subscription = Subscription("userId", subscriptionTime, true)
+    val subscription = Subscription("userId", subscriptionTime, false)
     return MeetupEvent(MeetupEventState(1L, 50, "eventName", startTime, Subscriptions(listOf(subscription))))
   }
 }
