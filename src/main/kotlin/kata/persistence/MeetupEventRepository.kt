@@ -28,28 +28,16 @@ class MeetupEventRepository(
     val stateFromEvents = projectStateFrom(meetupEvents as List<MeetupBaseEvent>)
 
     val subscriptions = findSubscriptionsOf(meetupEventId)
-    val sql = "SELECT * FROM MEETUP_EVENT WHERE id = :id"
-    return jdbi.withHandle<MeetupEvent?, RuntimeException> { handle: Handle ->
-      handle.createQuery(sql)
-        .bind("id", meetupEventId)
-        .map(mapper(stateFromEvents, Subscriptions(subscriptions)))
-        .findOne()
-        .orElse(null)
-    }
-  }
 
-  private fun mapper(stateFromEvents: MeetupEventState, subscriptions: Subscriptions): RowMapper<MeetupEvent> {
-    return RowMapper { rs: ResultSet, ctx: StatementContext? ->
-      MeetupEvent(
-        MeetupEventState(
-          stateFromEvents.id,
-          stateFromEvents.capacity,
-          stateFromEvents.eventName,
-          stateFromEvents.startTime,
-          subscriptions
-        )
+    return MeetupEvent(
+      MeetupEventState(
+        stateFromEvents.id,
+        stateFromEvents.capacity,
+        stateFromEvents.eventName,
+        stateFromEvents.startTime,
+        Subscriptions(subscriptions)
       )
-    }
+    )
   }
 
   private fun findSubscriptionsOf(meetupEventId: Long): MutableList<Subscription> {
@@ -67,27 +55,10 @@ class MeetupEventRepository(
   fun save(meetupEvent: MeetupEvent) {
     jdbi.useTransaction<RuntimeException> { handle: Handle? ->
       val state = meetupEvent.state
-      upsertMeetupEvent(meetupEvent).useHandle(handle)
       if (state.subscriptions != null) upsertSubscriptions(state.id, state.subscriptions.list).useHandle(
         handle
       )
       deleteMeetupSubscriptionsNotInUserIds(state.id, state.users).useHandle(handle)
-    }
-  }
-
-  private fun upsertMeetupEvent(meetupEvent: MeetupEvent): HandleConsumer<RuntimeException> {
-    val state = meetupEvent.state
-    val sql = "" +
-        "MERGE INTO MEETUP_EVENT (id, event_name, start_time, capacity) " +
-        "KEY (id) " +
-        "VALUES (:id, :event_name, :start_time, :capacity)"
-    return HandleConsumer { handle: Handle ->
-      handle.createUpdate(sql)
-        .bind("id", state.id)
-        .bind("event_name", state.eventName)
-        .bind("start_time", state.startTime)
-        .bind("capacity", state.capacity)
-        .execute()
     }
   }
 
