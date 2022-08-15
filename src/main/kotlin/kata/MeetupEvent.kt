@@ -1,7 +1,6 @@
 package kata
 
 import java.time.LocalDateTime
-import java.time.Instant
 import java.util.*
 
 
@@ -12,8 +11,6 @@ data class MeetupEventState(
   val startTime: LocalDateTime,
   val subscriptions: Subscriptions = Subscriptions(listOf())
 ) {
-  val users: List<String>
-    get() = subscriptions.users
 
   val waitingList: List<Subscription>
     get() = subscriptions.waitingList
@@ -68,13 +65,6 @@ data class MeetupEvent(
 
   constructor(state: MeetupEventState) : this(state, listOf())
 
-  fun subscribe(userId: String, registrationTime: Instant): MeetupEvent {
-    val subscription = Subscription(userId, registrationTime, state.isFull)
-    val newSubscriptions = state.subscriptions.add(subscription)
-
-    return copy(state = state.copy(subscriptions = newSubscriptions))
-  }
-
   fun cancelSubscription(userId: String): MeetupEvent {
     val (updatedEvent, removedSub) = remove(userId)
 
@@ -89,26 +79,10 @@ data class MeetupEvent(
     return copy(state = state.copy(subscriptions = newSubscriptions))
   }
 
-  private fun confirm(toConfirm: List<Subscription>): MeetupEvent {
-    val newSubscriptions = state.subscriptions.confirm(toConfirm)
-    return copy(state = state.copy(subscriptions = newSubscriptions))
-  }
-
   private fun remove(userId: String): Pair<MeetupEvent, Optional<Subscription>> {
     val (newSubscriptions, removedSubscription) = state.subscriptions.removeBy(userId)
 
     val updatedEvent = copy(state = state.copy(subscriptions = newSubscriptions))
     return Pair(updatedEvent, removedSubscription)
-  }
-
-  fun updateCapacityTo(newCapacity: Int): MeetupEvent {
-    val newSlots = newCapacity - state.capacity
-    val toConfirm = state.subscriptions.firstInWaitingList(newSlots)
-
-    return withCapacity(newCapacity).confirm(toConfirm)
-  }
-
-  private fun withCapacity(capacity: Int): MeetupEvent {
-    return copy(state = state.copy(capacity = capacity))
   }
 }

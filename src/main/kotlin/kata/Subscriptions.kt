@@ -7,11 +7,6 @@ data class Subscriptions(
   val list: List<Subscription>
 ) {
 
-  val users: List<String>
-    get() = list.stream()
-      .map { it.userId }
-      .toList()
-
   val participants: List<Subscription>
     get() = list.stream()
       .filter { !it.isInWaitingList }

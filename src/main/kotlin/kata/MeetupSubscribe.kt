@@ -30,8 +30,6 @@ class MeetupSubscribe(
     }
 
     val registrationTime = Instant.now(clock)
-    val updatedMeetup = meetup.subscribe(userId, registrationTime)
-
     if (meetup.state.isFull) {
       val userAddedToMeetupEventWaitingList = UserAddedToMeetupEventWaitingList(meetupEventId, userId, registrationTime)
       eventStore.append(userAddedToMeetupEventWaitingList)
@@ -39,16 +37,12 @@ class MeetupSubscribe(
       val userSubscribedToMeetupEvent = UserSubscribedToMeetupEvent(meetupEventId, userId, registrationTime)
       eventStore.append(userSubscribedToMeetupEvent)
     }
-
-    repository.save(updatedMeetup)
   }
 
   fun cancelUserSubscription(userId: String, meetupEventId: Long) {
     val meetup = repository.findById(meetupEventId)
 
     val updatedMeetupEvent = meetup.cancelSubscription(userId)
-
-    repository.save(updatedMeetupEvent)
 
     val userCanceledSubscription = UserCancelledMeetupSubscription(meetupEventId, userId)
     eventStore.append(userCanceledSubscription)
@@ -68,9 +62,6 @@ class MeetupSubscribe(
 
     val oldCapacity = meetupEvent.state.capacity
     if (oldCapacity < newCapacity) {
-      val updatedMeetupEvent = meetupEvent.updateCapacityTo(newCapacity)
-      repository.save(updatedMeetupEvent)
-
       val meetupCapacityIncreased = MeetupEventCapacityIncreased(meetupEventId, newCapacity)
       eventStore.append(meetupCapacityIncreased)
 
