@@ -13,10 +13,6 @@ class MeetupSubscribe(
 
   fun registerMeetupEvent(eventName: String, eventCapacity: Int, startTime: LocalDateTime): Long {
     val id = repository.generateId()
-    val meetupEvent = MeetupEvent(MeetupEventState(id, eventCapacity, eventName, startTime))
-
-    repository.save(meetupEvent)
-
     val meetupEventRegistered = MeetupEventRegistered(id, eventName, eventCapacity, startTime)
     eventStore.append(meetupEventRegistered)
 
