@@ -43,7 +43,7 @@ class MeetupEventRepository(
       MeetupEvent(
         MeetupEventState(
           stateFromEvents.id,
-          rs.getInt("capacity"),
+          stateFromEvents.capacity,
           stateFromEvents.eventName,
           stateFromEvents.startTime,
           subscriptions

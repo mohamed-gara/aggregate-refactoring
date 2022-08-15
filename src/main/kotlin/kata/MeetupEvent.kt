@@ -33,6 +33,7 @@ fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
   events.fold(MeetupEventState(0, 0, "", LocalDateTime.MIN)) {
     state, event -> when(event) {
       is MeetupEventRegistered -> MeetupEventState(event.id, event.eventCapacity, event.eventName, event.startTime)
+      is MeetupEventCapacityIncreased -> state.copy(capacity = event.newCapacity)
       else -> state
     }
   }
