@@ -3,7 +3,6 @@ package kata
 import java.time.LocalDateTime
 import java.util.*
 
-
 data class MeetupEventState(
   val id: Long,
   val capacity: Int,
@@ -24,39 +23,53 @@ data class MeetupEventState(
   fun hasSubscriptionFor(userId: String): Boolean {
     return subscriptions.findBy(userId) != null
   }
+
+  fun apply(event: MeetupEventCapacityIncreased) =
+    copy(capacity = event.newCapacity)
+
+  fun apply(event: UserSubscribedToMeetupEvent): MeetupEventState {
+    val subscription = Subscription(event.userId, event.registrationTime, false)
+    val newSubscriptions = subscriptions.add(subscription)
+    return copy(subscriptions = newSubscriptions)
+  }
+
+  fun apply(event: UserAddedToMeetupEventWaitingList): MeetupEventState {
+    val subscription = Subscription(event.userId, event.registrationTime, true)
+    val newSubscriptions = subscriptions.add(subscription)
+    return copy(subscriptions = newSubscriptions)
+  }
+
+  fun apply(event: UserCancelledMeetupSubscription): MeetupEventState {
+    val (newSubscriptions) = subscriptions.removeBy(event.userId)
+    return copy(subscriptions = newSubscriptions)
+  }
+
+  fun apply(event: UserMovedFromWaitingListToParticipants): MeetupEventState {
+    val userSubscription = subscriptions.findBy(event.userId)
+    val newSubscriptions =
+      if (userSubscription != null) subscriptions.confirm(userSubscription) else subscriptions
+    return copy(subscriptions = newSubscriptions)
+  }
+
+  fun apply(event: UsersMovedFromWaitingListToParticipants): MeetupEventState {
+    val subscriptions = event.userIdList.mapNotNull { subscriptions.findBy(it) }
+    val newSubscriptions = this.subscriptions.confirm(subscriptions)
+    return copy(subscriptions = newSubscriptions)
+  }
 }
 
 fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
   events.fold(MeetupEventState(0, 0, "", LocalDateTime.MIN)) {
     state, event -> when(event) {
       is MeetupEventRegistered -> MeetupEventState(event.id, event.eventCapacity, event.eventName, event.startTime)
-      is MeetupEventCapacityIncreased -> state.copy(capacity = event.newCapacity)
-      is UserSubscribedToMeetupEvent -> {
-        val subscription = Subscription(event.userId, event.registrationTime, false)
-        val newSubscriptions = state.subscriptions.add(subscription)
-        return@fold state.copy(subscriptions = newSubscriptions)
-      }
-      is UserAddedToMeetupEventWaitingList -> {
-        val subscription = Subscription(event.userId, event.registrationTime, true)
-        val newSubscriptions = state.subscriptions.add(subscription)
-        return@fold state.copy(subscriptions = newSubscriptions)
-      }
-      is UserCancelledMeetupSubscription -> {
-        val (newSubscriptions) = state.subscriptions.removeBy(event.userId)
-        return@fold state.copy(subscriptions = newSubscriptions)
-      }
-      is UserMovedFromWaitingListToParticipants -> {
-        val userSubscription = state.subscriptions.findBy(event.userId)
-        val newSubscriptions = if(userSubscription != null) state.subscriptions.confirm(userSubscription) else state.subscriptions
-        return@fold state.copy(subscriptions = newSubscriptions)
-      }
-      is UsersMovedFromWaitingListToParticipants -> {
-        val subscriptions = event.userIdList.mapNotNull { state.subscriptions.findBy(it) }
-        val newSubscriptions = state.subscriptions.confirm(subscriptions)
-        return@fold state.copy(subscriptions = newSubscriptions)
-      }
+      is MeetupEventCapacityIncreased -> state.apply(event)
+      is UserSubscribedToMeetupEvent -> state.apply(event)
+      is UserAddedToMeetupEventWaitingList -> state.apply(event)
+      is UserCancelledMeetupSubscription -> state.apply(event)
+      is UserMovedFromWaitingListToParticipants -> state.apply(event)
+      is UsersMovedFromWaitingListToParticipants -> state.apply(event)
     }
-  }
+}
 
 data class MeetupEvent(
   val state: MeetupEventState,
