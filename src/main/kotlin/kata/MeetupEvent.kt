@@ -1,5 +1,6 @@
 package kata
 
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 
@@ -79,6 +80,15 @@ data class MeetupEvent(
 ) {
 
   constructor(state: MeetupEventState) : this(state, listOf())
+
+  fun subscribe(userId: String, registrationTime: Instant): MeetupBaseEvent {
+    val event = if (state.isFull) {
+      UserAddedToMeetupEventWaitingList(state.id, userId, registrationTime)
+    } else {
+      UserSubscribedToMeetupEvent(state.id, userId, registrationTime)
+    }
+    return event
+  }
 
   fun cancelSubscription(userId: String): MeetupEvent {
     val (updatedEvent, removedSub) = remove(userId)

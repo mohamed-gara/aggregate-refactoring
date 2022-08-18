@@ -29,14 +29,8 @@ class MeetupSubscribe(
       throw RuntimeException(String.format("User %s already has a subscription", userId))
     }
 
-    val registrationTime = Instant.now(clock)
-    if (meetup.state.isFull) {
-      val userAddedToMeetupEventWaitingList = UserAddedToMeetupEventWaitingList(meetupEventId, userId, registrationTime)
-      eventStore.append(userAddedToMeetupEventWaitingList)
-    } else {
-      val userSubscribedToMeetupEvent = UserSubscribedToMeetupEvent(meetupEventId, userId, registrationTime)
-      eventStore.append(userSubscribedToMeetupEvent)
-    }
+    val event = meetup.subscribe(userId, Instant.now(clock))
+    eventStore.append(event)
   }
 
   fun cancelUserSubscription(userId: String, meetupEventId: Long) {
