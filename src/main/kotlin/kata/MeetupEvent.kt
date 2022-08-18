@@ -3,6 +3,7 @@ package kata
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
+import java.util.stream.Stream
 
 data class MeetupEventState(
   val id: Long,
@@ -90,24 +91,26 @@ data class MeetupEvent(
     return event
   }
 
-  fun cancelSubscription(userId: String): MeetupEvent {
-    val (updatedEvent, removedSub) = remove(userId)
+  fun unsubscribe(userId: String, meetupEventId: Long): List<MeetupBaseEvent> {
 
-    return removedSub.filter { !it.isInWaitingList }
+    val event1 = state.subscriptions.subscriptionOf(userId)
+      .map { UserCancelledMeetupSubscription(meetupEventId, userId) }
+
+    val event2 = state.subscriptions.subscriptionOf(userId)
+      .filter { !it.isInWaitingList }
       .flatMap { state.subscriptions.firstInWaitingList }
-      .map { firstInWaitingList -> updatedEvent.confirm(firstInWaitingList) }
-      .orElse(updatedEvent)
-  }
+      .map { firstInWaitingList -> UserMovedFromWaitingListToParticipants(
+        meetupEventId,
+        firstInWaitingList.userId,
+        event1.get()
+      ) }
 
-  private fun confirm(subscription: Subscription): MeetupEvent {
-    val newSubscriptions = state.subscriptions.confirm(subscription)
-    return copy(state = state.copy(subscriptions = newSubscriptions))
-  }
-
-  private fun remove(userId: String): Pair<MeetupEvent, Optional<Subscription>> {
-    val (newSubscriptions, removedSubscription) = state.subscriptions.removeBy(userId)
-
-    val updatedEvent = copy(state = state.copy(subscriptions = newSubscriptions))
-    return Pair(updatedEvent, removedSubscription)
+   return listOf(event1, event2)
   }
 }
+
+private fun listOf(
+  event1: Optional<UserCancelledMeetupSubscription>,
+  event2: Optional<UserMovedFromWaitingListToParticipants>
+): List<MeetupBaseEvent> = Stream.concat(event1.stream(), event2.stream())
+  .toList()

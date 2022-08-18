@@ -36,19 +36,9 @@ class MeetupSubscribe(
   fun cancelUserSubscription(userId: String, meetupEventId: Long) {
     val meetup = repository.findById(meetupEventId)
 
-    val updatedMeetupEvent = meetup.cancelSubscription(userId)
+    val eventList = meetup.unsubscribe(userId, meetupEventId)
 
-    val userCanceledSubscription = UserCancelledMeetupSubscription(meetupEventId, userId)
-    eventStore.append(userCanceledSubscription)
-
-    if (meetup.state.participants.any { it.userId == userId }) {
-      val userMovedToParticipants = UserMovedFromWaitingListToParticipants(
-        meetupEventId,
-        updatedMeetupEvent.state.participants.last().userId,
-        userCanceledSubscription
-      )
-      eventStore.append(userMovedToParticipants)
-    }
+    eventList.forEach(eventStore::append)
   }
 
   fun increaseCapacity(meetupEventId: Long, newCapacity: Int) {

@@ -24,10 +24,12 @@ data class Subscriptions(
       if (waitingList.isEmpty()) Optional.empty()
       else Optional.of(waitingList.first())
 
-  fun findBy(userId: String): Subscription? = list.stream()
-    .filter { it.userId == userId }
-    .findAny()
+  fun findBy(userId: String): Subscription? = subscriptionOf(userId)
     .orElse(null)
+
+  fun subscriptionOf(userId: String): Optional<Subscription> = list.stream()
+      .filter { it.userId == userId }
+      .findAny()
 
   fun removeBy(userId: String): Pair<Subscriptions, Optional<Subscription>> {
     val toDelete: Optional<Subscription> = list.stream()
