@@ -24,34 +24,44 @@ data class MeetupEventState(
     return subscriptions.findBy(userId) != null
   }
 
-  fun apply(event: MeetupEventCapacityIncreased) =
+  fun applyEvent(event: MeetupBaseEvent) = when (event) {
+    is MeetupEventRegistered -> MeetupEventState(event.id, event.eventCapacity, event.eventName, event.startTime)
+    is MeetupEventCapacityIncreased -> apply(event)
+    is UserSubscribedToMeetupEvent -> apply(event)
+    is UserAddedToMeetupEventWaitingList -> apply(event)
+    is UserCancelledMeetupSubscription -> apply(event)
+    is UserMovedFromWaitingListToParticipants -> apply(event)
+    is UsersMovedFromWaitingListToParticipants -> apply(event)
+  }
+
+  private fun apply(event: MeetupEventCapacityIncreased) =
     copy(capacity = event.newCapacity)
 
-  fun apply(event: UserSubscribedToMeetupEvent): MeetupEventState {
+  private fun apply(event: UserSubscribedToMeetupEvent): MeetupEventState {
     val subscription = Subscription(event.userId, event.registrationTime, false)
     val newSubscriptions = subscriptions.add(subscription)
     return copy(subscriptions = newSubscriptions)
   }
 
-  fun apply(event: UserAddedToMeetupEventWaitingList): MeetupEventState {
+  private fun apply(event: UserAddedToMeetupEventWaitingList): MeetupEventState {
     val subscription = Subscription(event.userId, event.registrationTime, true)
     val newSubscriptions = subscriptions.add(subscription)
     return copy(subscriptions = newSubscriptions)
   }
 
-  fun apply(event: UserCancelledMeetupSubscription): MeetupEventState {
+  private fun apply(event: UserCancelledMeetupSubscription): MeetupEventState {
     val (newSubscriptions) = subscriptions.removeBy(event.userId)
     return copy(subscriptions = newSubscriptions)
   }
 
-  fun apply(event: UserMovedFromWaitingListToParticipants): MeetupEventState {
+  private fun apply(event: UserMovedFromWaitingListToParticipants): MeetupEventState {
     val userSubscription = subscriptions.findBy(event.userId)
     val newSubscriptions =
       if (userSubscription != null) subscriptions.confirm(userSubscription) else subscriptions
     return copy(subscriptions = newSubscriptions)
   }
 
-  fun apply(event: UsersMovedFromWaitingListToParticipants): MeetupEventState {
+  private fun apply(event: UsersMovedFromWaitingListToParticipants): MeetupEventState {
     val subscriptions = event.userIdList.mapNotNull { subscriptions.findBy(it) }
     val newSubscriptions = this.subscriptions.confirm(subscriptions)
     return copy(subscriptions = newSubscriptions)
@@ -60,16 +70,8 @@ data class MeetupEventState(
 
 fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
   events.fold(MeetupEventState(0, 0, "", LocalDateTime.MIN)) {
-    state, event -> when(event) {
-      is MeetupEventRegistered -> MeetupEventState(event.id, event.eventCapacity, event.eventName, event.startTime)
-      is MeetupEventCapacityIncreased -> state.apply(event)
-      is UserSubscribedToMeetupEvent -> state.apply(event)
-      is UserAddedToMeetupEventWaitingList -> state.apply(event)
-      is UserCancelledMeetupSubscription -> state.apply(event)
-      is UserMovedFromWaitingListToParticipants -> state.apply(event)
-      is UsersMovedFromWaitingListToParticipants -> state.apply(event)
-    }
-}
+    state, event -> state.applyEvent(event)
+  }
 
 data class MeetupEvent(
   val state: MeetupEventState,
