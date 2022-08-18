@@ -107,6 +107,18 @@ data class MeetupEvent(
 
    return listOf(event1, event2)
   }
+
+  fun increaseCapacityTo(newCapacity: Int): List<MeetupBaseEvent> {
+    val meetupCapacityIncreased = MeetupEventCapacityIncreased(state.id, newCapacity)
+
+    val movedUsers = UsersMovedFromWaitingListToParticipants(
+      state.id,
+      state.subscriptions.firstInWaitingList(newCapacity - state.capacity).map { it.userId },
+      meetupCapacityIncreased
+    )
+
+    return listOf(meetupCapacityIncreased, movedUsers)
+  }
 }
 
 private fun listOf(

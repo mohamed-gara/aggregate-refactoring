@@ -46,15 +46,8 @@ class MeetupSubscribe(
 
     val oldCapacity = meetupEvent.state.capacity
     if (oldCapacity < newCapacity) {
-      val meetupCapacityIncreased = MeetupEventCapacityIncreased(meetupEventId, newCapacity)
-      eventStore.append(meetupCapacityIncreased)
-
-      val movedUsers = UsersMovedFromWaitingListToParticipants(
-        meetupEventId,
-        meetupEvent.state.subscriptions.firstInWaitingList(newCapacity - oldCapacity).map { it.userId },
-        meetupCapacityIncreased
-      )
-      eventStore.append(movedUsers)
+      val eventList = meetupEvent.increaseCapacityTo(newCapacity)
+      eventList.forEach(eventStore::append)
     }
   }
 
