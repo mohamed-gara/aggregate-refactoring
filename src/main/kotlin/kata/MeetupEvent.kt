@@ -5,12 +5,14 @@ import java.time.LocalDateTime
 import java.util.*
 import java.util.stream.Stream
 
+
 data class MeetupEventState(
   val id: Long,
   val capacity: Int,
   val eventName: String,
   val startTime: LocalDateTime,
-  val subscriptions: Subscriptions = Subscriptions(listOf())
+  val subscriptions: Subscriptions = Subscriptions(),
+  val lastAppliedEventIndex: Int = -1,
 ) {
 
   val waitingList: List<Subscription>
@@ -26,15 +28,21 @@ data class MeetupEventState(
     return subscriptions.findBy(userId) != null
   }
 
-  fun applyEvent(event: MeetupBaseEvent) = when (event) {
-    is MeetupEventRegistered -> MeetupEventState(event.id, event.eventCapacity, event.eventName, event.startTime)
-    is MeetupEventCapacityIncreased -> apply(event)
-    is UserSubscribedToMeetupEvent -> apply(event)
-    is UserAddedToMeetupEventWaitingList -> apply(event)
-    is UserCancelledMeetupSubscription -> apply(event)
-    is UserMovedFromWaitingListToParticipants -> apply(event)
-    is UsersMovedFromWaitingListToParticipants -> apply(event)
+  fun applyEvent(event: MeetupBaseEvent): MeetupEventState {
+    val newState = when (event) {
+      is MeetupEventRegistered -> MeetupEventState(event.id, event.eventCapacity, event.eventName, event.startTime)
+      is MeetupEventCapacityIncreased -> apply(event)
+      is UserSubscribedToMeetupEvent -> apply(event)
+      is UserAddedToMeetupEventWaitingList -> apply(event)
+      is UserCancelledMeetupSubscription -> apply(event)
+      is UserMovedFromWaitingListToParticipants -> apply(event)
+      is UsersMovedFromWaitingListToParticipants -> apply(event)
+    }
+    return newState.incrementLastEventIndex()
   }
+
+  private fun incrementLastEventIndex() =
+    copy(lastAppliedEventIndex = lastAppliedEventIndex + 1)
 
   private fun apply(event: MeetupEventCapacityIncreased) =
     copy(capacity = event.newCapacity)

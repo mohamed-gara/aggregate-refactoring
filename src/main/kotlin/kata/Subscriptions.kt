@@ -4,7 +4,7 @@ import java.util.*
 import java.util.Comparator.comparing
 
 data class Subscriptions(
-  val list: List<Subscription>
+  val list: List<Subscription> = listOf(),
 ) {
 
   val participants: List<Subscription>

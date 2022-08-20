@@ -1,37 +1,34 @@
 package kata
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset.UTC
 
-internal class HydrateMeetupEventStateTest {
+class MeetupEventStateTest {
 
-  @Test fun empty_event_list() {
+  @Test fun `empty event list`() {
     val state = projectStateFrom(listOf())
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(
-        0, 0, "", LocalDateTime.MIN
-      ))
+      .isEqualTo(MeetupEventState(0, 0, "", LocalDateTime.MIN, lastAppliedEventIndex = -1))
   }
 
-  @Test fun meetup_registered_event() {
-    val event = MeetupEventRegistered(
-      1, "Coding Dojo", 30, LocalDateTime.of(2022, 8, 15, 2, 5)
-    )
+  @Test fun `meetup registered event`() {
+    val startTime = LocalDateTime.of(2022, 8, 15, 2, 5)
+    val event = MeetupEventRegistered(1, "Coding Dojo", 30, startTime)
 
     val state = projectStateFrom(listOf(event))
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(
-        1, 30, "Coding Dojo", LocalDateTime.of(2022, 8, 15, 2, 5)
-      ))
+      .isEqualTo(MeetupEventState(1, 30, "Coding Dojo", startTime, lastAppliedEventIndex = 0))
   }
 
-  @Test fun user_subscribed_to_meetup_event() {
+  @Test fun `user subscribed to meetup event`() {
     val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
@@ -49,11 +46,12 @@ internal class HydrateMeetupEventStateTest {
         meetupRegistrationTime,
         Subscriptions(listOf(
           Subscription("user1", userRegistrationTime, false)
-        ))
+        )),
+        1,
       ))
   }
 
-  @Test fun user_added_to_meetup_waiting_list_event() {
+  @Test fun `user added to meetup waiting list event`() {
     val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
@@ -73,11 +71,12 @@ internal class HydrateMeetupEventStateTest {
         Subscriptions(listOf(
           Subscription("user1", userRegistrationTime, false),
           Subscription("user2", userRegistrationTime, true),
-        ))
+        )),
+        2,
       ))
   }
 
-  @Test fun user_cancelled_meetup_event() {
+  @Test fun `user cancelled meetup event`() {
     val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
@@ -94,11 +93,12 @@ internal class HydrateMeetupEventStateTest {
         1,
         "Coding Dojo",
         meetupRegistrationTime,
-        Subscriptions(listOf())
+        Subscriptions(listOf()),
+        2,
       ))
   }
 
-  @Test fun user_moved_from_waiting_list_to_participants_event() {
+  @Test fun `user moved from waiting list to participants event`() {
     val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
@@ -117,11 +117,12 @@ internal class HydrateMeetupEventStateTest {
         meetupRegistrationTime,
         Subscriptions(listOf(
           Subscription("user2", userRegistrationTime, false),
-        ))
+        )),
+        2,
       ))
   }
 
-  @Test fun users_moved_from_waiting_list_to_participants_event() {
+  @Test fun `users moved from waiting list to participants event`() {
     val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
@@ -142,7 +143,8 @@ internal class HydrateMeetupEventStateTest {
         Subscriptions(listOf(
           Subscription("user1", userRegistrationTime, false),
           Subscription("user2", userRegistrationTime, false),
-        ))
+        )),
+        3,
       ))
   }
 }
