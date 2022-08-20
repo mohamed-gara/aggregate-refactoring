@@ -129,7 +129,7 @@ internal class HydrateMeetupEventStateTest {
       MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
       UserAddedToMeetupEventWaitingList(1, "user1", userRegistrationTime),
       UserAddedToMeetupEventWaitingList(1, "user2", userRegistrationTime),
-      UsersMovedFromWaitingListToParticipants(1, listOf("user1", "user2"), UserCancelledMeetupSubscription(1, "user1")),
+      UsersMovedFromWaitingListToParticipants(1, listOf("user1", "user2"), MeetupEventCapacityIncreased(1, 10)),
     ))
 
     assertThat(state)

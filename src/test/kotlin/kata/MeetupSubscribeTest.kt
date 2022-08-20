@@ -1,12 +1,10 @@
 package kata
 
 import kata.dbtestutil.MemoryDbTestContext
-import kata.persistence.Event
 import kata.persistence.InMemoryEventStore
 import kata.persistence.MeetupEventRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.assertj.core.api.ListAssert
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -205,7 +203,7 @@ class MeetupSubscribeTest {
       )
   }
 
-  private fun assertThatEventStore(): ListAssert<Event> = assertThat(eventStore.events)
+  private fun assertThatEventStore() = assertThat(eventStore.events)
     .usingRecursiveFieldByFieldElementComparator(
       RecursiveComparisonConfiguration.builder()
         .withStrictTypeChecking(true)
