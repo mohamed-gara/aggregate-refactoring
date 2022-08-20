@@ -80,7 +80,7 @@ data class MeetupEvent(
   val events: List<MeetupBaseEvent>,
 ) {
 
-  constructor(state: MeetupEventState) : this(state, listOf())
+  constructor(events: List<MeetupBaseEvent>) : this(projectStateFrom(events), events)
 
   fun subscribe(userId: String, registrationTime: Instant): MeetupBaseEvent {
     val event = if (state.isFull) {

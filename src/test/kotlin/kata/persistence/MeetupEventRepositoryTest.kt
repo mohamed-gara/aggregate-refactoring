@@ -41,7 +41,9 @@ internal class MeetupEventRepositoryTest {
   fun meetup_event(): MeetupEvent {
     val startTime = LocalDateTime.of(2022, 1, 2, 6, 0)
     val subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC)
-    val subscription = Subscription("userId", subscriptionTime, false)
-    return MeetupEvent(MeetupEventState(1L, 50, "eventName", startTime, Subscriptions(listOf(subscription))))
+    return MeetupEvent(listOf(
+      MeetupEventRegistered(1L,"eventName", 50, startTime),
+      UserSubscribedToMeetupEvent(1, "userId", subscriptionTime),
+    ))
   }
 }
