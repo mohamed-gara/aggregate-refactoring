@@ -147,4 +147,110 @@ class MeetupEventStateTest {
         3,
       ))
   }
+
+  @Nested inner class Snapshot {
+    val userRegistrationTime: Instant = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
+    val meetupRegistrationTime: LocalDateTime = LocalDateTime.of(2022, 8, 15, 2, 5)
+    val events = listOf(
+      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserAddedToMeetupEventWaitingList(1, "user1", userRegistrationTime),
+      UserAddedToMeetupEventWaitingList(1, "user2", userRegistrationTime),
+      UsersMovedFromWaitingListToParticipants(1, listOf("user1", "user2"), MeetupEventCapacityIncreased(1, 10)),
+    )
+    val expectedState = MeetupEventState(
+      1,
+      1,
+      "Coding Dojo",
+      meetupRegistrationTime,
+      Subscriptions(listOf(
+        Subscription("user1", userRegistrationTime, false),
+        Subscription("user2", userRegistrationTime, false),
+      )),
+      3,
+    )
+
+    @Test fun empty() {
+
+      val state = projectStateFrom(events)
+
+      assertThat(state)
+        .usingRecursiveComparison()
+        .isEqualTo(expectedState)
+    }
+
+    @Test fun `state after 1st event`() {
+      val firstEventState = MeetupEventState(
+        1,
+        1,
+        "Coding Dojo",
+        meetupRegistrationTime,
+        lastAppliedEventIndex = 0,
+      )
+
+      val state = projectStateFrom(events, firstEventState)
+
+      assertThat(state)
+        .usingRecursiveComparison()
+        .isEqualTo(expectedState)
+    }
+
+    @Test fun `state after 2nd event`() {
+      val secondEventState = MeetupEventState(
+        1,
+        1,
+        "Coding Dojo",
+        meetupRegistrationTime,
+        Subscriptions(listOf(
+          Subscription("user1", userRegistrationTime, true),
+        )),
+        lastAppliedEventIndex = 1,
+      )
+
+      val state = projectStateFrom(events, secondEventState)
+
+      assertThat(state)
+        .usingRecursiveComparison()
+        .isEqualTo(expectedState)
+    }
+
+    @Test fun `state after 3rd event`() {
+      val thirdEventState = MeetupEventState(
+        1,
+        1,
+        "Coding Dojo",
+        meetupRegistrationTime,
+        Subscriptions(listOf(
+          Subscription("user1", userRegistrationTime, true),
+          Subscription("user2", userRegistrationTime, true),
+        )),
+        lastAppliedEventIndex = 2,
+      )
+
+      val state = projectStateFrom(events, thirdEventState)
+
+      assertThat(state)
+        .usingRecursiveComparison()
+        .isEqualTo(expectedState)
+    }
+
+    @Test fun `state after 4th event`() {
+      val forthEventState = MeetupEventState(
+        1,
+        1,
+        "Coding Dojo",
+        meetupRegistrationTime,
+        Subscriptions(listOf(
+          Subscription("user1", userRegistrationTime, false),
+          Subscription("user2", userRegistrationTime, false),
+        )),
+        lastAppliedEventIndex = 3,
+      )
+
+      val state = projectStateFrom(events, forthEventState)
+
+      assertThat(state)
+        .usingRecursiveComparison()
+        .isEqualTo(expectedState)
+    }
+  }
 }

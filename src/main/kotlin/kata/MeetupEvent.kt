@@ -78,10 +78,14 @@ data class MeetupEventState(
   }
 }
 
-fun projectStateFrom(events: List<MeetupBaseEvent>): MeetupEventState =
-  events.fold(MeetupEventState(0, 0, "", LocalDateTime.MIN)) {
-    state, event -> state.applyEvent(event)
-  }
+fun projectStateFrom(
+  events: List<MeetupBaseEvent>,
+  snapshot: MeetupEventState = MeetupEventState(0, 0, "", LocalDateTime.MIN),
+): MeetupEventState =
+  events.drop(snapshot.lastAppliedEventIndex + 1)
+    .fold(snapshot) { state, event ->
+      state.applyEvent(event)
+    }
 
 data class MeetupEvent(
   val state: MeetupEventState,
