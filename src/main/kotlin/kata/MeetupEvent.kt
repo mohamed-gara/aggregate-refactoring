@@ -87,23 +87,35 @@ fun projectStateFrom(
       state.applyEvent(event)
     }
 
+fun newMeetup(
+  id: Long,
+  eventName: String,
+  eventCapacity: Int,
+  startTime: LocalDateTime
+): MeetupEvent {
+  val meetupEventRegistered = MeetupEventRegistered(id, eventName, eventCapacity, startTime)
+  return MeetupEvent(listOf(meetupEventRegistered))
+}
+
 data class MeetupEvent(
   val state: MeetupEventState,
   val events: List<MeetupBaseEvent>,
+  val version: Int = -1,
 ) {
 
   constructor(events: List<MeetupBaseEvent>) : this(projectStateFrom(events), events)
+  constructor(events: List<MeetupBaseEvent>, version: Int) : this(projectStateFrom(events), events, version)
 
-  fun subscribe(userId: String, registrationTime: Instant): MeetupBaseEvent {
+  fun subscribe(userId: String, registrationTime: Instant): MeetupEvent {
     val event = if (state.isFull) {
       UserAddedToMeetupEventWaitingList(state.id, userId, registrationTime)
     } else {
       UserSubscribedToMeetupEvent(state.id, userId, registrationTime)
     }
-    return event
+    return this.apply(event)
   }
 
-  fun unsubscribe(userId: String, meetupEventId: Long): List<MeetupBaseEvent> {
+  fun unsubscribe(userId: String, meetupEventId: Long): MeetupEvent {
 
     val event1 = state.subscriptions.subscriptionOf(userId)
       .map { UserCancelledMeetupSubscription(meetupEventId, userId) }
@@ -117,10 +129,10 @@ data class MeetupEvent(
         event1.get()
       ) }
 
-   return listOf(event1, event2)
+   return this.apply(listOf(event1, event2))
   }
 
-  fun increaseCapacityTo(newCapacity: Int): List<MeetupBaseEvent> {
+  fun increaseCapacityTo(newCapacity: Int): MeetupEvent {
     val meetupCapacityIncreased = MeetupEventCapacityIncreased(state.id, newCapacity)
 
     val movedUsers = UsersMovedFromWaitingListToParticipants(
@@ -129,8 +141,16 @@ data class MeetupEvent(
       meetupCapacityIncreased
     )
 
-    return listOf(meetupCapacityIncreased, movedUsers)
+    return this.apply(listOf(meetupCapacityIncreased, movedUsers))
   }
+
+  private fun apply(event: MeetupBaseEvent) = apply(listOf(event))
+
+  private fun apply(newEvents: List<MeetupBaseEvent>) = MeetupEvent(
+    events = this.events + newEvents,
+    state = projectStateFrom(this.events + newEvents, state),
+    version = version,
+  )
 }
 
 private fun listOf(

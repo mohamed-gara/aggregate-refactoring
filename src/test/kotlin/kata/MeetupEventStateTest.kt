@@ -253,4 +253,42 @@ class MeetupEventStateTest {
         .isEqualTo(expectedState)
     }
   }
+
+  @Nested inner class Apply {
+    @Test fun update_events_and_state() {
+      val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
+      val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
+
+      val meetup = MeetupEvent(
+        events = listOf(MeetupEventRegistered(1, "Coding Dojo", 30, meetupRegistrationTime)),
+        version = 19
+      )
+      assertThat(meetup.state.lastAppliedEventIndex).isEqualTo(0)
+      assertThat(meetup.version).isEqualTo(19)
+
+      val updatedMeetup = meetup.subscribe("user1", userRegistrationTime)
+
+      assertThat(updatedMeetup)
+        .usingRecursiveComparison()
+        .isEqualTo(
+          MeetupEvent(
+            version = 19,
+            events = listOf(
+              MeetupEventRegistered(1, "Coding Dojo", 30, meetupRegistrationTime),
+              UserSubscribedToMeetupEvent(1, "user1", userRegistrationTime),
+            ),
+            state = MeetupEventState(
+              1,
+              30,
+              "Coding Dojo",
+              meetupRegistrationTime,
+              Subscriptions(listOf(
+                Subscription("user1", userRegistrationTime, false)
+              )),
+              1,
+            )
+          )
+        )
+    }
+  }
 }

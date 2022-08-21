@@ -3,22 +3,19 @@ package kata
 import kata.persistence.MeetupEventRepository
 import java.time.LocalDateTime
 import java.lang.RuntimeException
-import kata.persistence.EventStore
 import java.time.Clock
 import java.time.Instant
 import java.util.stream.Collectors
 
 class MeetupSubscribe(
   private val repository: MeetupEventRepository,
-  private val eventStore: EventStore,
   private val clock: Clock,
 ) {
 
   fun registerMeetupEvent(eventName: String, eventCapacity: Int, startTime: LocalDateTime): Long {
     val id = repository.generateId()
-    val meetupEventRegistered = MeetupEventRegistered(id, eventName, eventCapacity, startTime)
-    eventStore.append(meetupEventRegistered)
-
+    val meetup = newMeetup(id, eventName, eventCapacity, startTime)
+    repository.save(meetup)
     return id
   }
 
@@ -29,16 +26,16 @@ class MeetupSubscribe(
       throw RuntimeException(String.format("User %s already has a subscription", userId))
     }
 
-    val event = meetup.subscribe(userId, Instant.now(clock))
-    eventStore.append(event)
+    val updateMeetup = meetup.subscribe(userId, Instant.now(clock))
+    repository.save(updateMeetup)
   }
 
   fun cancelUserSubscription(userId: String, meetupEventId: Long) {
     val meetup = repository.findById(meetupEventId)
 
-    val eventList = meetup.unsubscribe(userId, meetupEventId)
+    val updatedMeetup = meetup.unsubscribe(userId, meetupEventId)
 
-    eventList.forEach(eventStore::append)
+    repository.save(updatedMeetup)
   }
 
   fun increaseCapacity(meetupEventId: Long, newCapacity: Int) {
@@ -46,8 +43,8 @@ class MeetupSubscribe(
 
     val oldCapacity = meetupEvent.state.capacity
     if (oldCapacity < newCapacity) {
-      val eventList = meetupEvent.increaseCapacityTo(newCapacity)
-      eventList.forEach(eventStore::append)
+      val updatedMeetup = meetupEvent.increaseCapacityTo(newCapacity)
+      repository.save(updatedMeetup)
     }
   }
 
