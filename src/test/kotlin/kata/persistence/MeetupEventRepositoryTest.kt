@@ -1,10 +1,9 @@
 package kata.persistence
 
-import kata.*
-import kata.dbtestutil.MemoryDbTestContext
-import kata.dbtestutil.MemoryDbTestContext.Companion.openWithSql
+import kata.MeetupEvent
+import kata.MeetupEventRegistered
+import kata.UserSubscribedToMeetupEvent
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -12,18 +11,11 @@ import java.time.ZoneOffset
 
 internal class MeetupEventRepositoryTest {
 
-  lateinit var memoryDbTestContext: MemoryDbTestContext
   lateinit var sut: MeetupEventRepository
   val eventStore = InMemoryEventStore()
 
   @BeforeEach fun setUp() {
-    memoryDbTestContext = openWithSql("/setup.sql")
-    val jdbi = memoryDbTestContext.jdbi
-    sut = MeetupEventRepository(jdbi, eventStore)
-  }
-
-  @AfterEach fun tearDown() {
-    memoryDbTestContext.close()
+    sut = MeetupEventRepository(eventStore)
   }
 
   @Test fun create_meetup_event() {

@@ -1,12 +1,10 @@
 package kata
 
-import kata.dbtestutil.MemoryDbTestContext
 import kata.persistence.InMemoryEventStore
 import kata.persistence.MeetupEventRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -15,21 +13,14 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset.UTC
 
 class MeetupSubscribeTest {
-  lateinit var memoryDbTestContext: MemoryDbTestContext
   lateinit var sut: MeetupSubscribe
   val eventStore = InMemoryEventStore()
   val now: Instant = Instant.now()
 
   @BeforeEach fun setUp() {
-    memoryDbTestContext = MemoryDbTestContext.openWithSql("/setup.sql")
-    val jdbi = memoryDbTestContext.jdbi
-    val repository = MeetupEventRepository(jdbi, eventStore)
+    val repository = MeetupEventRepository(eventStore)
 
-    sut = MeetupSubscribe(repository, eventStore, Clock.fixed(now, UTC))
-  }
-
-  @AfterEach fun tearDown() {
-    memoryDbTestContext.close()
+    sut = MeetupSubscribe(repository, Clock.fixed(now, UTC))
   }
 
   @Test fun should_be_able_to_give_state_of_meetup_event() {
