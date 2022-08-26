@@ -5,7 +5,6 @@ import kata.persistence.MeetupEventRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
@@ -13,15 +12,11 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset.UTC
 
 class MeetupSubscribeTest {
-  lateinit var sut: MeetupSubscribe
   val eventStore = InMemoryEventStore()
+  val repository = MeetupEventRepository(eventStore)
   val now: Instant = Instant.now()
 
-  @BeforeEach fun setUp() {
-    val repository = MeetupEventRepository(eventStore)
-
-    sut = MeetupSubscribe(repository, Clock.fixed(now, UTC))
-  }
+  val sut =MeetupSubscribe(repository, Clock.fixed(now, UTC))
 
   @Test fun should_be_able_to_give_state_of_meetup_event() {
     val startTime = LocalDateTime.of(2019, 6, 15, 20, 0)
@@ -194,7 +189,27 @@ class MeetupSubscribeTest {
       )
   }
 
+  @Test fun find_meetup_list() {
+    val startTime1 = LocalDateTime.of(2019, 6, 15, 20, 0)
+    val startTime2 = LocalDateTime.of(2020, 6, 15, 20, 0)
+
+    val meetupEventId1 = sut.registerMeetupEvent("Coding dojo session 1", 50, startTime1)
+    val meetupEventId2 = sut.registerMeetupEvent("Coding dojo session 2", 100, startTime2)
+
+    assertThatMeetups().containsExactly(
+      MeetupEventState(meetupEventId1, 50, "Coding dojo session 1", startTime1, Subscriptions(), 0),
+      MeetupEventState(meetupEventId2, 100, "Coding dojo session 2", startTime2, Subscriptions(), 0),
+    )
+  }
+
   private fun assertThatEventStore() = assertThat(eventStore.events)
+    .usingRecursiveFieldByFieldElementComparator(
+      RecursiveComparisonConfiguration.builder()
+        .withStrictTypeChecking(true)
+        .build()
+    )
+
+  private fun assertThatMeetups() = assertThat(repository.findAll())
     .usingRecursiveFieldByFieldElementComparator(
       RecursiveComparisonConfiguration.builder()
         .withStrictTypeChecking(true)
