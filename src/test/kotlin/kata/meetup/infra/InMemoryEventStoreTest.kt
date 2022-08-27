@@ -1,7 +1,7 @@
-package kata.persistence
+package kata.meetup.infra
 
-import kata.MeetupEvent
-import kata.MeetupCapacityIncreased
+import kata.meetup.domain.MeetupCapacityIncreased
+import kata.meetup.domain.MeetupEvent
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.ListAssert
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration

@@ -1,4 +1,4 @@
-package kata
+package kata.meetup.infra
 
 import java.time.LocalDateTime
 

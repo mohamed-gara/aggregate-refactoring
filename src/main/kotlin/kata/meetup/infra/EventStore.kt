@@ -1,6 +1,6 @@
-package kata.persistence
+package kata.meetup.infra
 
-import kata.MeetupEvent
+import kata.meetup.domain.MeetupEvent
 
 
 interface EventStore {

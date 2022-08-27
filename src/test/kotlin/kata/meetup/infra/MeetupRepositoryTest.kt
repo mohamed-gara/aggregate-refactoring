@@ -1,36 +1,31 @@
-package kata.persistence
+package kata.meetup.infra
 
-import kata.Meetup
-import kata.MeetupRegistered
-import kata.UserSubscribedToMeetup
+import kata.meetup.domain.Meetup
+import kata.meetup.domain.MeetupRegistered
+import kata.meetup.domain.UserSubscribedToMeetup
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 internal class MeetupRepositoryTest {
 
-  lateinit var sut: MeetupRepository
   val eventStore = InMemoryEventStore()
+  val sut = MeetupRepository(eventStore)
 
-  @BeforeEach fun setUp() {
-    sut = MeetupRepository(eventStore)
-  }
-
-  @Test fun create_meetup_event() {
+  @Test fun create_meetup() {
     eventStore.append(MeetupRegistered(1, "eventName", 50, LocalDateTime.of(2022, 1, 2, 6, 0)))
     val subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC)
     eventStore.append(UserSubscribedToMeetup(1, "userId", subscriptionTime))
 
-    val result = sut.findById(1L)
+    val result = sut.findById(1)
 
     Assertions.assertThat(result)
       .usingRecursiveComparison()
-      .isEqualTo(meetup_event())
+      .isEqualTo(meetup())
   }
 
-  fun meetup_event(): Meetup {
+  fun meetup(): Meetup {
     val startTime = LocalDateTime.of(2022, 1, 2, 6, 0)
     val subscriptionTime = LocalDateTime.of(2022, 1, 1, 6, 0).toInstant(ZoneOffset.UTC)
     return Meetup(

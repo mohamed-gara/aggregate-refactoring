@@ -1,27 +1,28 @@
-package kata.persistence
+package kata.meetup.infra
 
-import kata.Meetup
-import kata.MeetupState
+import kata.meetup.domain.MeetupRepository
+import kata.meetup.domain.Meetup
+import kata.meetup.domain.MeetupState
 import java.lang.Integer.max
 import java.util.concurrent.atomic.AtomicLong
 
 class MeetupRepository(
   private val eventStore: EventStore,
-) {
+) : MeetupRepository {
 
   private val counter = AtomicLong(0)
   private val meetups = mutableMapOf<Long, MeetupState>()
 
-  fun generateId(): Long {
+  override fun generateId(): Long {
     return counter.incrementAndGet()
   }
 
-  fun findById(meetupId: Long): Meetup {
+  override fun findById(meetupId: Long): Meetup {
     val meetups = eventStore.readStream(meetupId)
     return Meetup(meetups, meetups.size)
   }
 
-  fun save(meetup: Meetup) {
+  override fun save(meetup: Meetup) {
     meetup.events
       .drop(max(meetup.version, 0))
       .forEach(eventStore::append)
@@ -29,7 +30,7 @@ class MeetupRepository(
     meetups[meetup.state.id] = meetup.state
   }
 
-  fun findAll(): List<MeetupState> {
+  override fun findAll(): List<MeetupState> {
     return meetups.values.toList()
   }
 }

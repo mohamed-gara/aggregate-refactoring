@@ -1,7 +1,8 @@
-package kata
+package kata.meetup.application
 
-import kata.persistence.InMemoryEventStore
-import kata.persistence.MeetupRepository
+import kata.meetup.domain.*
+import kata.meetup.infra.InMemoryEventStore
+import kata.meetup.infra.MeetupRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
@@ -16,7 +17,7 @@ class MeetupServiceTest {
   val repository = MeetupRepository(eventStore)
   val now: Instant = Instant.now()
 
-  val sut =MeetupService(repository, Clock.fixed(now, UTC))
+  val sut = MeetupService(repository, Clock.fixed(now, UTC))
 
   @Test fun should_be_able_to_give_state_of_meetup_event() {
     val startTime = LocalDateTime.of(2019, 6, 15, 20, 0)

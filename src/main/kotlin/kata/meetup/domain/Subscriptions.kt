@@ -1,4 +1,4 @@
-package kata
+package kata.meetup.domain
 
 import java.util.*
 import java.util.Comparator.comparing
