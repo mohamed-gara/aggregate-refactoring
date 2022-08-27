@@ -2,7 +2,7 @@ package kata
 
 import java.time.LocalDateTime
 
-class MeetupEventStatusDto(
+class MeetupStatusDto(
   val meetupId: Long,
   val eventName: String,
   val eventCapacity: Int,

@@ -1,24 +1,24 @@
 package kata.persistence
 
-import kata.MeetupBaseEvent
+import kata.MeetupEvent
 
 
 interface EventStore {
-  fun append(event: MeetupBaseEvent)
-  fun readStream(id: Long): List<MeetupBaseEvent>
+  fun append(event: MeetupEvent)
+  fun readStream(id: Long): List<MeetupEvent>
 }
 
 class InMemoryEventStore : EventStore {
-  private val eventList = mutableListOf<MeetupBaseEvent>()
+  private val eventList = mutableListOf<MeetupEvent>()
 
-  val events: List<MeetupBaseEvent>
+  val events: List<MeetupEvent>
     get() = eventList
 
-  override fun append(event: MeetupBaseEvent) {
+  override fun append(event: MeetupEvent) {
     eventList.add(event)
   }
 
-  override fun readStream(id: Long): List<MeetupBaseEvent> {
+  override fun readStream(id: Long): List<MeetupEvent> {
     return eventList.filter { it.id == id }
   }
 }

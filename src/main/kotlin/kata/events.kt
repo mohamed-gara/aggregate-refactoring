@@ -4,47 +4,47 @@ import java.time.Instant
 import java.time.LocalDateTime
 
 
-sealed class MeetupBaseEvent() {
+sealed class MeetupEvent() {
   abstract val id: Long
 }
 
-data class MeetupEventRegistered(
+data class MeetupRegistered(
   override val id: Long,
   val eventName: String,
   val eventCapacity: Int,
   val startTime: LocalDateTime
-) : MeetupBaseEvent()
+) : MeetupEvent()
 
-data class UserSubscribedToMeetupEvent(
+data class UserSubscribedToMeetup(
   override val id: Long,
   val userId: String,
   val registrationTime: Instant,
-) : MeetupBaseEvent()
+) : MeetupEvent()
 
-data class UserAddedToMeetupEventWaitingList(
+data class UserAddedToMeetupWaitingList(
   override val id: Long,
   val userId: String,
   val registrationTime: Instant,
-  ) : MeetupBaseEvent()
+  ) : MeetupEvent()
 
 data class UserCancelledMeetupSubscription(
   override val id: Long,
   val userId: String,
-) : MeetupBaseEvent()
+) : MeetupEvent()
 
-data class MeetupEventCapacityIncreased(
+data class MeetupCapacityIncreased(
   override val id: Long,
   val newCapacity: Int
-) : MeetupBaseEvent()
+) : MeetupEvent()
 
 data class UserMovedFromWaitingListToParticipants(
   override val id: Long,
   val userId: String,
   val cause: UserCancelledMeetupSubscription
-) : MeetupBaseEvent()
+) : MeetupEvent()
 
 data class UsersMovedFromWaitingListToParticipants(
   override val id: Long,
   val userIdList: List<String>,
-  val cause: MeetupEventCapacityIncreased
-) : MeetupBaseEvent()
+  val cause: MeetupCapacityIncreased
+) : MeetupEvent()

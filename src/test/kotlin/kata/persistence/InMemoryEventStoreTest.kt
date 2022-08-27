@@ -1,7 +1,7 @@
 package kata.persistence
 
-import kata.MeetupBaseEvent
-import kata.MeetupEventCapacityIncreased
+import kata.MeetupEvent
+import kata.MeetupCapacityIncreased
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.ListAssert
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
@@ -14,42 +14,42 @@ internal class InMemoryEventStoreTest {
 
   @Test fun append_events() {
 
-    eventStore.append(MeetupEventCapacityIncreased(100, 20))
-    eventStore.append(MeetupEventCapacityIncreased(200, 20))
-    eventStore.append(MeetupEventCapacityIncreased(300, 20))
-    eventStore.append(MeetupEventCapacityIncreased(100, 20))
+    eventStore.append(MeetupCapacityIncreased(100, 20))
+    eventStore.append(MeetupCapacityIncreased(200, 20))
+    eventStore.append(MeetupCapacityIncreased(300, 20))
+    eventStore.append(MeetupCapacityIncreased(100, 20))
 
     assertThatEventStore()
       .containsExactly(
-        MeetupEventCapacityIncreased(100, 20),
-        MeetupEventCapacityIncreased(200, 20),
-        MeetupEventCapacityIncreased(300, 20),
-        MeetupEventCapacityIncreased(100, 20),
+        MeetupCapacityIncreased(100, 20),
+        MeetupCapacityIncreased(200, 20),
+        MeetupCapacityIncreased(300, 20),
+        MeetupCapacityIncreased(100, 20),
       )
   }
 
   @Test fun fetch_stream_events() {
 
-    eventStore.append(MeetupEventCapacityIncreased(100, 20))
-    eventStore.append(MeetupEventCapacityIncreased(200, 20))
-    eventStore.append(MeetupEventCapacityIncreased(300, 20))
-    eventStore.append(MeetupEventCapacityIncreased(100, 20))
+    eventStore.append(MeetupCapacityIncreased(100, 20))
+    eventStore.append(MeetupCapacityIncreased(200, 20))
+    eventStore.append(MeetupCapacityIncreased(300, 20))
+    eventStore.append(MeetupCapacityIncreased(100, 20))
 
     assertThat(eventStore.readStream(100))
       .containsExactly(
-        MeetupEventCapacityIncreased(100, 20),
-        MeetupEventCapacityIncreased(100, 20),
+        MeetupCapacityIncreased(100, 20),
+        MeetupCapacityIncreased(100, 20),
       )
   }
 
-  private fun assertThat(list: List<MeetupBaseEvent>) = Assertions.assertThat(list)
+  private fun assertThat(list: List<MeetupEvent>) = Assertions.assertThat(list)
     .usingRecursiveFieldByFieldElementComparator(
       RecursiveComparisonConfiguration.builder()
         .withStrictTypeChecking(true)
         .build()
     )
 
-  private fun assertThatEventStore(): ListAssert<MeetupBaseEvent> = Assertions.assertThat(eventStore.events)
+  private fun assertThatEventStore(): ListAssert<MeetupEvent> = Assertions.assertThat(eventStore.events)
     .usingRecursiveFieldByFieldElementComparator(
       RecursiveComparisonConfiguration.builder()
         .withStrictTypeChecking(true)

@@ -7,25 +7,25 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset.UTC
 
-class MeetupEventStateTest {
+class MeetupStateTest {
 
   @Test fun `empty event list`() {
     val state = projectStateFrom(listOf())
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(0, 0, "", LocalDateTime.MIN, lastAppliedEventIndex = -1))
+      .isEqualTo(MeetupState(0, 0, "", LocalDateTime.MIN, lastAppliedEventIndex = -1))
   }
 
   @Test fun `meetup registered event`() {
     val startTime = LocalDateTime.of(2022, 8, 15, 2, 5)
-    val event = MeetupEventRegistered(1, "Coding Dojo", 30, startTime)
+    val event = MeetupRegistered(1, "Coding Dojo", 30, startTime)
 
     val state = projectStateFrom(listOf(event))
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(1, 30, "Coding Dojo", startTime, lastAppliedEventIndex = 0))
+      .isEqualTo(MeetupState(1, 30, "Coding Dojo", startTime, lastAppliedEventIndex = 0))
   }
 
   @Test fun `user subscribed to meetup event`() {
@@ -33,13 +33,13 @@ class MeetupEventStateTest {
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
     val state = projectStateFrom(listOf(
-      MeetupEventRegistered(1, "Coding Dojo", 30, meetupRegistrationTime),
-      UserSubscribedToMeetupEvent(1, "user1", userRegistrationTime)
+      MeetupRegistered(1, "Coding Dojo", 30, meetupRegistrationTime),
+      UserSubscribedToMeetup(1, "user1", userRegistrationTime)
     ))
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(
+      .isEqualTo(MeetupState(
         1,
         30,
         "Coding Dojo",
@@ -56,14 +56,14 @@ class MeetupEventStateTest {
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
     val state = projectStateFrom(listOf(
-      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
-      UserSubscribedToMeetupEvent(1, "user1", userRegistrationTime),
-      UserAddedToMeetupEventWaitingList(1, "user2", userRegistrationTime)
+      MeetupRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserSubscribedToMeetup(1, "user1", userRegistrationTime),
+      UserAddedToMeetupWaitingList(1, "user2", userRegistrationTime)
     ))
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(
+      .isEqualTo(MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -81,14 +81,14 @@ class MeetupEventStateTest {
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
     val state = projectStateFrom(listOf(
-      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
-      UserSubscribedToMeetupEvent(1, "user1", userRegistrationTime),
+      MeetupRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserSubscribedToMeetup(1, "user1", userRegistrationTime),
       UserCancelledMeetupSubscription(1, "user1")
     ))
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(
+      .isEqualTo(MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -103,14 +103,14 @@ class MeetupEventStateTest {
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
     val state = projectStateFrom(listOf(
-      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
-      UserAddedToMeetupEventWaitingList(1, "user2", userRegistrationTime),
+      MeetupRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserAddedToMeetupWaitingList(1, "user2", userRegistrationTime),
       UserMovedFromWaitingListToParticipants(1, "user2", UserCancelledMeetupSubscription(1, "user1")),
     ))
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(
+      .isEqualTo(MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -127,15 +127,15 @@ class MeetupEventStateTest {
     val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
     val state = projectStateFrom(listOf(
-      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
-      UserAddedToMeetupEventWaitingList(1, "user1", userRegistrationTime),
-      UserAddedToMeetupEventWaitingList(1, "user2", userRegistrationTime),
-      UsersMovedFromWaitingListToParticipants(1, listOf("user1", "user2"), MeetupEventCapacityIncreased(1, 10)),
+      MeetupRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserAddedToMeetupWaitingList(1, "user1", userRegistrationTime),
+      UserAddedToMeetupWaitingList(1, "user2", userRegistrationTime),
+      UsersMovedFromWaitingListToParticipants(1, listOf("user1", "user2"), MeetupCapacityIncreased(1, 10)),
     ))
 
     assertThat(state)
       .usingRecursiveComparison()
-      .isEqualTo(MeetupEventState(
+      .isEqualTo(MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -152,12 +152,12 @@ class MeetupEventStateTest {
     val userRegistrationTime: Instant = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
     val meetupRegistrationTime: LocalDateTime = LocalDateTime.of(2022, 8, 15, 2, 5)
     val events = listOf(
-      MeetupEventRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
-      UserAddedToMeetupEventWaitingList(1, "user1", userRegistrationTime),
-      UserAddedToMeetupEventWaitingList(1, "user2", userRegistrationTime),
-      UsersMovedFromWaitingListToParticipants(1, listOf("user1", "user2"), MeetupEventCapacityIncreased(1, 10)),
+      MeetupRegistered(1, "Coding Dojo", 1, meetupRegistrationTime),
+      UserAddedToMeetupWaitingList(1, "user1", userRegistrationTime),
+      UserAddedToMeetupWaitingList(1, "user2", userRegistrationTime),
+      UsersMovedFromWaitingListToParticipants(1, listOf("user1", "user2"), MeetupCapacityIncreased(1, 10)),
     )
-    val expectedState = MeetupEventState(
+    val expectedState = MeetupState(
       1,
       1,
       "Coding Dojo",
@@ -179,7 +179,7 @@ class MeetupEventStateTest {
     }
 
     @Test fun `state after 1st event`() {
-      val firstEventState = MeetupEventState(
+      val firstEventState = MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -195,7 +195,7 @@ class MeetupEventStateTest {
     }
 
     @Test fun `state after 2nd event`() {
-      val secondEventState = MeetupEventState(
+      val secondEventState = MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -214,7 +214,7 @@ class MeetupEventStateTest {
     }
 
     @Test fun `state after 3rd event`() {
-      val thirdEventState = MeetupEventState(
+      val thirdEventState = MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -234,7 +234,7 @@ class MeetupEventStateTest {
     }
 
     @Test fun `state after 4th event`() {
-      val forthEventState = MeetupEventState(
+      val forthEventState = MeetupState(
         1,
         1,
         "Coding Dojo",
@@ -259,8 +259,8 @@ class MeetupEventStateTest {
       val userRegistrationTime = LocalDateTime.of(2022, 8, 16, 2, 5).toInstant(UTC)
       val meetupRegistrationTime = LocalDateTime.of(2022, 8, 15, 2, 5)
 
-      val meetup = MeetupEvent(
-        events = listOf(MeetupEventRegistered(1, "Coding Dojo", 30, meetupRegistrationTime)),
+      val meetup = Meetup(
+        events = listOf(MeetupRegistered(1, "Coding Dojo", 30, meetupRegistrationTime)),
         version = 19
       )
       assertThat(meetup.state.lastAppliedEventIndex).isEqualTo(0)
@@ -271,13 +271,13 @@ class MeetupEventStateTest {
       assertThat(updatedMeetup)
         .usingRecursiveComparison()
         .isEqualTo(
-          MeetupEvent(
+          Meetup(
             version = 19,
             events = listOf(
-              MeetupEventRegistered(1, "Coding Dojo", 30, meetupRegistrationTime),
-              UserSubscribedToMeetupEvent(1, "user1", userRegistrationTime),
+              MeetupRegistered(1, "Coding Dojo", 30, meetupRegistrationTime),
+              UserSubscribedToMeetup(1, "user1", userRegistrationTime),
             ),
-            state = MeetupEventState(
+            state = MeetupState(
               1,
               30,
               "Coding Dojo",
