@@ -1,12 +1,20 @@
 package kata.meetup.application
 
+import com.github.dockerjava.api.model.ExposedPort
+import com.github.dockerjava.api.model.HostConfig
+import com.github.dockerjava.api.model.PortBinding
+import com.github.dockerjava.api.model.Ports
 import kata.meetup.domain.*
 import kata.meetup.infra.InMemoryEventStore
 import kata.meetup.infra.MeetupRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.testcontainers.containers.MongoDBContainer
+import org.testcontainers.utility.DockerImageName
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -18,6 +26,23 @@ class MeetupServiceTest {
   val now: Instant = Instant.now()
 
   val sut = MeetupService(repository, Clock.fixed(now, UTC))
+
+  companion object {
+    val mongoDBContainer = MongoDBContainer(DockerImageName.parse("mongo:4.4.16"))
+
+    @BeforeAll@JvmStatic fun beforeClass() {
+      mongoDBContainer.withCreateContainerCmdModifier{
+        cmd -> cmd.withHostConfig(
+          HostConfig().withPortBindings(PortBinding(Ports.Binding.bindPort(27017), ExposedPort(27017)))
+        )
+      }
+      mongoDBContainer.start()
+    }
+
+    @AfterAll@JvmStatic fun afterClass() {
+      mongoDBContainer.stop()
+    }
+  }
 
   @Test fun should_be_able_to_give_state_of_meetup_event() {
     val startTime = LocalDateTime.of(2019, 6, 15, 20, 0)
