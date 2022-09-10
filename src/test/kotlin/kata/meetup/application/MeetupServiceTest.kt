@@ -5,14 +5,18 @@ import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.Ports
 import kata.meetup.domain.*
-import kata.meetup.infra.InMemoryEventStore
 import kata.meetup.infra.MeetupRepository
+import kata.meetup.infra.MongodbEventStore
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
+import org.bson.Document
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.litote.kmongo.KMongo
+import org.litote.kmongo.getCollection
 import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.utility.DockerImageName
 import java.time.Clock
@@ -21,9 +25,9 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset.UTC
 
 class MeetupServiceTest {
-  val eventStore = InMemoryEventStore()
+  val eventStore = MongodbEventStore()
   val repository = MeetupRepository(eventStore)
-  val now: Instant = Instant.now()
+  val now: Instant = LocalDateTime.of(2019, 6, 15, 20, 0).toInstant(UTC)
 
   val sut = MeetupService(repository, Clock.fixed(now, UTC))
 
@@ -44,8 +48,17 @@ class MeetupServiceTest {
     }
   }
 
+  @BeforeEach fun beforeEach() {
+    val client = KMongo.createClient()
+    val database = client.getDatabase("test")
+    val stateCollection = database.getCollection<MeetupState>("meetups")
+    val eventsCollection = database.getCollection<MeetupEvent>("eventLog")
+    stateCollection.deleteMany(Document())
+    eventsCollection.deleteMany(Document())
+  }
+
   @Test fun should_be_able_to_give_state_of_meetup_event() {
-    val startTime = LocalDateTime.of(2019, 6, 15, 20, 0)
+    val startTime = LocalDateTime.of(2019, 6, 15, 20, 0, 0, 0)
 
     val meetupId = sut.registerMeetup("Coding dojo session 1", 50, startTime)
 

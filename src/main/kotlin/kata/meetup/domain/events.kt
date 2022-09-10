@@ -1,9 +1,11 @@
 package kata.meetup.domain
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.Instant
 import java.time.LocalDateTime
 
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 sealed class MeetupEvent() {
   abstract val id: Long
 }
