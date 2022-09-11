@@ -11,6 +11,9 @@ data class MeetupState(
   val lastAppliedEventIndex: Int = -1,
 ) {
 
+  val _id: Long
+    get() = this.id
+
   val waitingList: List<Subscription>
     get() = subscriptions.waitingList
 
