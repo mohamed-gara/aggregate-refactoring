@@ -1,8 +1,8 @@
 package kata.meetup.application
 
-import kata.meetup.infra.MeetupStatusDto
+import kata.meetup.domain.MeetupRepository
+import kata.meetup.domain.MeetupStatusDto
 import kata.meetup.domain.Subscription
-import kata.meetup.infra.MeetupRepository
 import kata.meetup.domain.newMeetup
 import java.time.LocalDateTime
 import java.lang.RuntimeException

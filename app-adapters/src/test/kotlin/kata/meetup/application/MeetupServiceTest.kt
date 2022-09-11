@@ -5,8 +5,8 @@ import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.Ports
 import kata.meetup.domain.*
-import kata.meetup.infra.MeetupRepository
-import kata.meetup.infra.MongodbEventStore
+import kata.infra.mongodb.MeetupMongodbRepository
+import kata.infra.mongodb.MongodbEventStore
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration
@@ -26,7 +26,7 @@ import java.time.ZoneOffset.UTC
 
 class MeetupServiceTest {
   val eventStore = MongodbEventStore()
-  val repository = MeetupRepository(eventStore)
+  val repository = MeetupMongodbRepository(eventStore)
   val now: Instant = LocalDateTime.of(2019, 6, 15, 20, 0).toInstant(UTC)
 
   val sut = MeetupService(repository, Clock.fixed(now, UTC))

@@ -1,5 +1,6 @@
-package kata.meetup.infra
+package kata.infra.mongodb
 
+import kata.infra.EventStore
 import kata.meetup.domain.MeetupRepository
 import kata.meetup.domain.Meetup
 import kata.meetup.domain.MeetupState
@@ -9,7 +10,7 @@ import org.litote.kmongo.save
 import java.lang.Integer.max
 import java.util.concurrent.atomic.AtomicLong
 
-class MeetupRepository(
+class MeetupMongodbRepository(
   private val eventStore: EventStore,
 ) : MeetupRepository {
 

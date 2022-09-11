@@ -8,6 +8,8 @@ import kata.meetup.domain.Meetup
 import kata.meetup.domain.MeetupRegistered
 import kata.meetup.domain.MeetupState
 import kata.meetup.domain.UserSubscribedToMeetup
+import kata.infra.mongodb.MeetupMongodbRepository
+import kata.infra.mongodb.MongodbEventStore
 import org.assertj.core.api.Assertions
 import org.bson.Document
 import org.junit.jupiter.api.AfterAll
@@ -21,10 +23,10 @@ import org.testcontainers.utility.DockerImageName
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-internal class MeetupRepositoryTest {
+internal class MeetupMongodbRepositoryTest {
 
   val eventStore = MongodbEventStore()
-  val sut = MeetupRepository(eventStore)
+  val sut = MeetupMongodbRepository(eventStore)
 
   companion object {
     val mongoDBContainer = MongoDBContainer(DockerImageName.parse("mongo:4.4.16"))
